@@ -104,17 +104,25 @@ Let's assume some user stories for them
 > To be able to view them
 
 > As a `core user`
+>
 > I want to be able change visibility and opacity of data layers
+>
 > To configure the appropriate display mode for data layers
 
 > As a `core user`
+>
 > I want to be able change map style
+>
 > To choose the most suitable layout for web map
 
 > As a `core user`
+>
 > I want to share my visualization
+>
 > To be able to show it to others or save it as static link
 
 > As a `company user`
+>
 > I want to open the `Web Tiles Viewer` with predefined config
+>
 > To create direct links to view my data
