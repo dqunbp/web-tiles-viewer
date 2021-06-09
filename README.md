@@ -98,7 +98,9 @@ As I said before there is two types of users
 Let's assume some user stories for them
 
 > As a `core user`
+>
 > I want to add data layers to the web map
+>
 > To be able to view them
 
 > As a `core user`
