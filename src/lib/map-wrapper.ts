@@ -1,4 +1,5 @@
 import mapboxgl from "mapbox-gl";
+import { initialMapState } from "./constants";
 
 class MapWrapper {
   private _map?: mapboxgl.Map;
@@ -14,16 +15,21 @@ class MapWrapper {
     return !!this._map;
   }
 
-  create<T extends HTMLElement>(node: T | null) {
+  create<T extends HTMLElement>(
+    node: T | null,
+    cb?: (map: mapboxgl.Map) => void
+  ) {
     if (!node) return;
 
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
     this._map = new mapboxgl.Map({
       container: node,
-      style: "mapbox://styles/mapbox/dark-v10", // style URL
-      center: [-74.5, 40], // starting position [lng, lat]
-      zoom: 9, // starting zoom
+      zoom: initialMapState.zoom,
+      center: initialMapState.center,
+      style: initialMapState.style.url,
     });
+
+    if (cb !== undefined) cb(this._map);
   }
 }
 
