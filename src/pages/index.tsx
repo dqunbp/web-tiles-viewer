@@ -3,6 +3,12 @@ import Head from "next/head";
 
 import WebMap from "components/web-map";
 import Sidebar from "components/sidebar";
+import { inspect } from "@xstate/inspect";
+
+if (typeof window !== "undefined")
+  inspect({
+    iframe: false,
+  });
 
 export default function Home() {
   return (

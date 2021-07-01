@@ -4,16 +4,20 @@ import {
   interpret,
   EventObject,
   AssignAction,
+  spawn,
+  ActorRef,
 } from "xstate";
 import { initialMapState, MapStyle } from "./constants";
+import { createLayerMachine, LayerEvent } from "./layer-state-machine";
 import mapbox from "./map-wrapper";
-import { addDataLayer, DataLayer } from "./mapbox-helpers";
+import { addDataLayer, DataLayer, removeDataLayer } from "./mapbox-helpers";
 
+export type LayerRef = ActorRef<LayerEvent>;
 type Context = {
   mapStyle: MapStyle;
   center: [number, number];
   zoom: number;
-  layers: DataLayer[];
+  layers: (DataLayer & { ref: LayerRef })[];
 };
 
 const { style, zoom, center } = initialMapState;
@@ -25,27 +29,35 @@ const context: Context = {
 };
 
 export enum EventType {
+  MAP_LOAD = "MAP_LOAD",
   ZOOM = "ZOOM",
   MOVE = "MOVE",
   CHANGE_STYLE = "CHANGE_STYLE",
   ADD_LAYER = "ADD_LAYER",
+  DELETE_LAYER = "DELETE_LAYER",
 }
 type Event =
+  | { type: EventType.MAP_LOAD }
   | { type: EventType.ZOOM; zoom: number; isOriginal?: boolean }
   | { type: EventType.MOVE; center: [number, number]; isOriginal?: boolean }
   | { type: EventType.CHANGE_STYLE; mapStyle: MapStyle }
-  | { type: EventType.ADD_LAYER; layer: DataLayer };
+  | { type: EventType.ADD_LAYER; layer: DataLayer }
+  | { type: EventType.DELETE_LAYER; id: string };
 
 type State =
   | { value: "loading"; context: Context }
   | { value: "ready"; context: Context };
 
-const config = {
-  id: "web-map",
-  initial: "ready",
+const appStateConfig = {
+  id: "app",
+  initial: "loading",
   context,
   states: {
-    loading: {},
+    loading: {
+      on: {
+        MAP_LOAD: "ready",
+      },
+    },
     ready: {
       on: {
         ZOOM: {
@@ -63,6 +75,10 @@ const config = {
         ADD_LAYER: {
           target: "ready",
           actions: ["handleAddDataLayer"],
+        },
+        DELETE_LAYER: {
+          target: "ready",
+          actions: ["handleDeleteDataLayer"],
         },
       },
     },
@@ -112,20 +128,42 @@ const handleAddDataLayer = assign<Context, Event>({
 
     addDataLayer(mapbox.map, event.layer);
 
-    return [..._ctx.layers, event.layer];
+    const newLayer = { ...event.layer };
+    if (newLayer.name === "") newLayer.name = `layer-${_ctx.layers.length + 1}`;
+
+    return _ctx.layers.concat({
+      ...newLayer,
+      ref: spawn(createLayerMachine(newLayer)),
+    });
   },
 });
 
-const stateMachine = createMachine<Context, Event, State>(config, {
+const handleDeleteDataLayer = assign<Context, Event>({
+  layers: (_ctx, event) => {
+    if (event.type !== EventType.DELETE_LAYER)
+      onBadEvent(EventType.DELETE_LAYER, event.type);
+
+    removeDataLayer(mapbox.map, event.id);
+
+    console.log(_ctx.layers);
+
+    return [..._ctx.layers].filter((layer) => layer.id !== event.id);
+  },
+});
+
+const appMachine = createMachine<Context, Event, State>(appStateConfig, {
   actions: {
     handleZoomChange,
     handleCenterChange,
     handleChangeMapStyle,
     handleAddDataLayer,
+    handleDeleteDataLayer,
   },
 });
 
-export const stateService = interpret(stateMachine);
+export const stateService = interpret(appMachine, { devTools: true });
 stateService.start();
 
-// stateService.onChange(console.log);
+stateService.onTransition(console.log);
+stateService.onEvent(console.log);
+stateService.onChange(console.log);

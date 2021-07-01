@@ -15,7 +15,7 @@ export type Source =
   | { type: "vector"; tiles: string[]; sourceLayer: string }
   | { type: "vector"; url: string };
 
-function buildSource(layer: DataLayer): Source {
+function createSource(layer: DataLayer): Source {
   switch (layer.type) {
     case "raster":
       switch (layer.urlType) {
@@ -61,7 +61,7 @@ type Layer =
       sourceLayer: string;
     };
 
-function buildLayer(id: string, sourceId: string, layer: DataLayer): Layer {
+function createLayer(id: string, sourceId: string, layer: DataLayer): Layer {
   switch (layer.type) {
     case "raster":
       return { id, type: "raster", source: sourceId };
@@ -80,8 +80,8 @@ function buildLayer(id: string, sourceId: string, layer: DataLayer): Layer {
 export function addDataLayer(mapAPI: mapboxgl.Map, layer: DataLayer) {
   const sourceId = `${layer.id}-datasource`;
 
-  const addSourcePayload = buildSource(layer);
-  const addLayerPayload = buildLayer(`${layer.id}-datalayer`, sourceId, layer);
+  const addSourcePayload = createSource(layer);
+  const addLayerPayload = createLayer(`${layer.id}-datalayer`, sourceId, layer);
 
   if (!mapAPI.getSource(sourceId)) {
     mapAPI.addSource(sourceId, addSourcePayload);

@@ -3,7 +3,7 @@ import { Card } from "@blueprintjs/core";
 import mapbox from "lib/map-wrapper";
 import { MapStyle, MapStyleId } from "lib/constants";
 import { useActor } from "@xstate/react";
-import { EventType, stateService } from "lib/state";
+import { EventType, stateService } from "lib/app-state-machine";
 
 type Style = {
   id: MapStyleId;

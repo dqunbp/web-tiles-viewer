@@ -18,7 +18,7 @@ import LayersList from "./layer-list";
 import { IconNames } from "@blueprintjs/icons";
 import { useMedia } from "hooks/use-media";
 import { useActor } from "@xstate/react";
-import { EventType, stateService } from "lib/state";
+import { EventType, stateService } from "lib/app-state-machine";
 import { DataLayer } from "lib/mapbox-helpers";
 
 const LayersTab: React.FC = () => {
@@ -37,12 +37,14 @@ const LayersTab: React.FC = () => {
       type: EventType.ADD_LAYER,
       layer,
     });
+    onClose();
   };
 
   return (
     <div className="px-4 h-full w-full">
       <Button
         fill
+        large
         icon={IconNames.ADD}
         text="Add new layer"
         onClick={onToggle}

@@ -1,8 +1,9 @@
 import * as React from "react";
 import mapbox from "lib/map-wrapper";
-import { EventType, stateService } from "lib/state";
+import { EventType, stateService } from "lib/app-state-machine";
 
 function syncMapEventsWithXState(map: mapboxgl.Map): void {
+  map.once("load", () => stateService.send({ type: EventType.MAP_LOAD }));
   map.on("zoomend", () => {
     stateService.send({
       type: EventType.ZOOM,
