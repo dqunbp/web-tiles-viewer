@@ -25,3 +25,24 @@ export const initialMapState: InitialMapState = {
   center: [-74.5, 40],
   zoom: 9,
 };
+
+export type LayerType = "raster" | "vector";
+export type UrlType = "xyz" | "tilejson";
+
+export const Placeholders: Record<UrlType, Record<LayerType, string>> = {
+  xyz: {
+    raster: "http(s)://somesite.com/{x}/{y}/{z}.png",
+    vector: "http(s)://somesite.com/{x}/{y}/{z}.pbf",
+  },
+  tilejson: {
+    raster: "http(s)://somesite.com/tiles.json",
+    vector: "http(s)://somesite.com/tiles.json",
+  },
+};
+
+export const layerMenuItems: UrlTypeMenuItem[] = [
+  { value: "xyz", label: "xyz" },
+  { value: "tilejson", label: "tilejson" },
+];
+
+export type UrlTypeMenuItem = { value: UrlType; label: string };

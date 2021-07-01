@@ -43,10 +43,6 @@ const Style: React.FC<Style> = (style) => {
   const [state, send] = useActor(stateService);
 
   const handleClickStyle = (nextStyle: Style) => () => {
-    console.log("next style", nextStyle);
-
-    mapbox.map.setStyle(nextStyle.url);
-
     send({
       type: EventType.CHANGE_STYLE,
       mapStyle: { id: nextStyle.id, url: nextStyle.url } as MapStyle,
