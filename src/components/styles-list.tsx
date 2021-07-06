@@ -3,7 +3,7 @@ import { Card } from "@blueprintjs/core";
 import mapbox from "lib/map-wrapper";
 import { MapStyle, MapStyleId } from "lib/constants";
 import { useActor } from "@xstate/react";
-import { EventType, stateService } from "lib/app-state-machine";
+import { MapEventType, mapService } from "lib/map-state-machine";
 
 type Style = {
   id: MapStyleId;
@@ -40,11 +40,11 @@ const styles: Style[] = [
 ];
 
 const Style: React.FC<Style> = (style) => {
-  const [state, send] = useActor(stateService);
+  const [state, send] = useActor(mapService);
 
   const handleClickStyle = (nextStyle: Style) => () => {
     send({
-      type: EventType.CHANGE_STYLE,
+      type: MapEventType.CHANGE_STYLE,
       mapStyle: { id: nextStyle.id, url: nextStyle.url } as MapStyle,
     });
   };

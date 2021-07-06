@@ -12,7 +12,7 @@ export type DataLayer = {
 export type Source =
   | { type: "raster"; tiles: string[]; tileSize: number }
   | { type: "raster"; url: string; tileSize: number }
-  | { type: "vector"; tiles: string[]; sourceLayer: string }
+  | { type: "vector"; tiles: string[] }
   | { type: "vector"; url: string };
 
 function createSource(layer: DataLayer): Source {
@@ -32,10 +32,12 @@ function createSource(layer: DataLayer): Source {
           return {
             type: "vector",
             tiles: [layer.url],
-            sourceLayer: layer.sourceLayer!,
           };
         case "tilejson":
-          return { type: "vector", url: layer.url };
+          return {
+            type: "vector",
+            url: layer.url,
+          };
         default:
           throw new Error("Unexpected url type");
       }
@@ -58,7 +60,7 @@ type Layer =
       source: string;
       layout: mapboxgl.FillLayout;
       paint: mapboxgl.FillPaint;
-      sourceLayer: string;
+      "source-layer": string;
     };
 
 function createLayer(id: string, sourceId: string, layer: DataLayer): Layer {
@@ -72,7 +74,7 @@ function createLayer(id: string, sourceId: string, layer: DataLayer): Layer {
         source: sourceId,
         layout: {},
         paint: { "fill-color": "green" },
-        sourceLayer: layer.sourceLayer!,
+        "source-layer": layer.sourceLayer!,
       };
   }
 }

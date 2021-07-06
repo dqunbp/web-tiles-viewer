@@ -69,7 +69,14 @@ const AddLayerForm: React.FC<{
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    onSubmit({ id: randomID(), name, type: layerType, urlType, url });
+    onSubmit({
+      id: randomID(),
+      name,
+      type: layerType,
+      urlType,
+      url,
+      sourceLayer,
+    });
   };
 
   return (
@@ -125,7 +132,7 @@ const AddLayerForm: React.FC<{
           />
         </FormGroup>
 
-        {layerType === "vector" && urlType === "xyz" && (
+        {layerType === "vector" && (
           <FormGroup
             className="mb-6"
             label={<div className="font-bold">Source layer</div>}

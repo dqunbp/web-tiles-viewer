@@ -1,19 +1,19 @@
 import * as React from "react";
 import mapbox from "lib/map-wrapper";
-import { EventType, stateService } from "lib/app-state-machine";
+import { MapEventType, mapService } from "lib/map-state-machine";
 
 function syncMapEventsWithXState(map: mapboxgl.Map): void {
-  map.once("load", () => stateService.send({ type: EventType.MAP_LOAD }));
+  map.once("load", () => mapService.send({ type: MapEventType.MAP_LOAD }));
   map.on("zoomend", () => {
-    stateService.send({
-      type: EventType.ZOOM,
+    mapService.send({
+      type: MapEventType.ZOOM,
       zoom: +map.getZoom().toFixed(2),
       isOriginal: true,
     });
   });
   map.on("moveend", () => {
-    stateService.send({
-      type: EventType.MOVE,
+    mapService.send({
+      type: MapEventType.MOVE,
       center: [
         +map.getCenter().lng.toFixed(4),
         +map.getCenter().lat.toFixed(4),

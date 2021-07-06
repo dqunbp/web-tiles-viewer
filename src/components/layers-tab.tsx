@@ -18,11 +18,11 @@ import LayersList from "./layer-list";
 import { IconNames } from "@blueprintjs/icons";
 import { useMedia } from "hooks/use-media";
 import { useActor } from "@xstate/react";
-import { EventType, stateService } from "lib/app-state-machine";
+import { MapEventType, mapService } from "lib/map-state-machine";
 import { DataLayer } from "lib/mapbox-helpers";
 
 const LayersTab: React.FC = () => {
-  const [state, send] = useActor(stateService);
+  const [state, send] = useActor(mapService);
 
   const { isOpen, onToggle, onClose } = useDisclosure();
 
@@ -34,7 +34,7 @@ const LayersTab: React.FC = () => {
 
   const handleAddNewLayer = (layer: DataLayer) => {
     send({
-      type: EventType.ADD_LAYER,
+      type: MapEventType.ADD_LAYER,
       layer,
     });
     onClose();

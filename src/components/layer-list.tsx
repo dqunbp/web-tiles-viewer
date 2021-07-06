@@ -1,9 +1,8 @@
 import * as React from "react";
 import { Button, Card, Intent, Tag } from "@blueprintjs/core";
 import { useActor } from "@xstate/react";
-import { EventType, LayerRef, stateService } from "lib/app-state-machine";
+import { LayerRef, mapService } from "lib/map-state-machine";
 import { IconNames } from "@blueprintjs/icons";
-import { DataLayer } from "lib/mapbox-helpers";
 import { LayerEventType } from "lib/layer-state-machine";
 
 const Layer: React.FC<{ layerRef: LayerRef }> = ({ layerRef }) => {
@@ -35,11 +34,8 @@ const Layer: React.FC<{ layerRef: LayerRef }> = ({ layerRef }) => {
 };
 
 const LayersList: React.FC = () => {
-  const [state, send] = useActor(stateService);
+  const [state, send] = useActor(mapService);
   const layers = state.context.layers;
-
-  // const handleRemoveLayer = (id: string) =>
-  //   send({ type: EventType.DELETE_LAYER, id });
 
   return (
     <div className="py-4">
