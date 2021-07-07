@@ -61,9 +61,14 @@ const AddLayerForm: React.FC<{
     setLayerType(e.currentTarget.value as LayerType);
 
   const [urlType, setUrlType] = React.useState<UrlType>("xyz");
+  const [url, setUrl] = React.useState<string>("");
+  const handleChangeUrl = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    if (url.includes(".json?") || url.endsWith(".json")) setUrlType("tilejson");
+    setUrl(e.target.value);
+  };
 
   const [name, setName] = React.useState<string>("");
-  const [url, setUrl] = React.useState<string>("");
   const [sourceLayer, setSourceLayer] = React.useState<string>("");
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -128,7 +133,7 @@ const AddLayerForm: React.FC<{
             placeholder={Placeholders[urlType][layerType]}
             rightElement={<UrlTypeMenu type={urlType} onChange={setUrlType} />}
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={handleChangeUrl}
           />
         </FormGroup>
 

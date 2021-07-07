@@ -5,7 +5,7 @@ class MapWrapper {
   private _map?: mapboxgl.Map;
 
   get map() {
-    if (!this._map)
+    if (typeof this._map === "undefined")
       throw new Error("Cannot access mapbox map before inilizing it");
 
     return this._map;
@@ -30,6 +30,10 @@ class MapWrapper {
     });
 
     if (cb !== undefined) cb(this._map);
+  }
+
+  remove() {
+    this._map = undefined;
   }
 }
 

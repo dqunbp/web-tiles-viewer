@@ -51,6 +51,28 @@ type MapState =
   | { value: "addingLayer"; context: MapContext }
   | { value: "ready"; context: MapContext };
 
+const handleSyncMapEvents = (_ctx: MapContext, event: MapEvent) => {
+  assertEventType(event, MapEventType.MAP_LOAD);
+
+  mapbox.map.on("zoomend", () => {
+    send({
+      type: MapEventType.ZOOM,
+      zoom: +mapbox.map.getZoom().toFixed(2),
+      isOriginal: true,
+    });
+  });
+  mapbox.map.on("moveend", () => {
+    send({
+      type: MapEventType.MOVE,
+      center: [
+        +mapbox.map.getCenter().lng.toFixed(4),
+        +mapbox.map.getCenter().lat.toFixed(4),
+      ],
+      isOriginal: true,
+    });
+  });
+};
+
 const handleZoomChange = assign<MapContext, MapEvent>({
   zoom: (_ctx, event) => {
     assertEventType(event, MapEventType.ZOOM);
@@ -118,17 +140,16 @@ const mapMachine = createMachine<MapContext, MapEvent, MapState>(
     states: {
       loading: {
         on: {
-          MAP_LOAD: "ready",
+          MAP_LOAD: { target: "ready", actions: ["handleSyncMapEvents"] },
         },
       },
-
       ready: {
         on: {
-          ZOOM: { actions: ["handleZoomChange"] },
-          MOVE: { actions: ["handleCenterChange"] },
-          CHANGE_STYLE: { actions: ["handleChangeMapStyle"] },
-          ADD_LAYER: { actions: ["handleAddDataLayer"] },
-          DELETE_LAYER: { actions: ["handleDeleteDataLayer"] },
+          ZOOM: { actions: ["handleZoomChange"], internal: true },
+          MOVE: { actions: ["handleCenterChange"], internal: true },
+          CHANGE_STYLE: { actions: ["handleChangeMapStyle"], internal: true },
+          ADD_LAYER: { actions: ["handleAddDataLayer"], internal: true },
+          DELETE_LAYER: { actions: ["handleDeleteDataLayer"], internal: true },
         },
       },
     },
@@ -140,6 +161,7 @@ const mapMachine = createMachine<MapContext, MapEvent, MapState>(
       handleChangeMapStyle,
       handleAddDataLayer,
       handleDeleteDataLayer,
+      handleSyncMapEvents,
     },
   }
 );
