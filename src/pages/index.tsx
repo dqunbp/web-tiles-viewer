@@ -4,6 +4,7 @@ import Head from "next/head";
 import WebMap from "components/web-map";
 import Sidebar from "components/sidebar";
 import { inspect } from "@xstate/inspect";
+import ViewportPanel from "components/viewport-panel";
 
 if (typeof window !== "undefined")
   inspect({
@@ -22,6 +23,7 @@ export default function Home() {
       <div className="dark absolute w-full h-full">
         <WebMap className="h-full w-full inset-0" />
         <Sidebar />
+        <ViewportPanel />
       </div>
     </div>
   );

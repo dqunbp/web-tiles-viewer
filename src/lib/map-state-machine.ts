@@ -55,14 +55,14 @@ const handleSyncMapEvents = (_ctx: MapContext, event: MapEvent) => {
   assertEventType(event, MapEventType.MAP_LOAD);
 
   mapbox.map.on("zoomend", () => {
-    send({
+    mapService.send({
       type: MapEventType.ZOOM,
       zoom: +mapbox.map.getZoom().toFixed(2),
       isOriginal: true,
     });
   });
   mapbox.map.on("moveend", () => {
-    send({
+    mapService.send({
       type: MapEventType.MOVE,
       center: [
         +mapbox.map.getCenter().lng.toFixed(4),
