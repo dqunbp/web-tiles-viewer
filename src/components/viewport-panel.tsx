@@ -34,14 +34,19 @@ const ViewportPanel: React.FC = () => {
 
   const [copyStatus, copyCenter] = useCopyToClipboard(center);
 
-  const editableZoom = useEditableField(isZoomValid, (zoom: string) =>
-    send({ type: MapEventType.ZOOM, zoom: +zoom })
-  );
-
-  const editableCenter = useEditableField(isCenterValid, (center: string) => {
-    const [lng, lat] = center.split(",").map((el) => el.trim());
-    send({ type: MapEventType.MOVE, center: [+lat, +lng] });
+  const editableZoom = useEditableField(isZoomValid, (nextZoom: string) => {
+    if (nextZoom === zoom) return;
+    send({ type: MapEventType.ZOOM, zoom: +nextZoom });
   });
+
+  const editableCenter = useEditableField(
+    isCenterValid,
+    (nextCenter: string) => {
+      if (nextCenter === center) return;
+      const [lng, lat] = nextCenter.split(",").map((el) => el.trim());
+      send({ type: MapEventType.MOVE, center: [+lat, +lng] });
+    }
+  );
 
   return (
     <div className="z-10 absolute right-0 top-0 sm:right-8 w-full sm:w-auto sm:top-8 p-3 sm:px-5 sm:pb-2 bg-LIGHT_GRAY5 sm:rounded border-b-4 border-LIGHT_GRAY1">
