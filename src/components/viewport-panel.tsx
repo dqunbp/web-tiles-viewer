@@ -39,18 +39,18 @@ const ViewportPanel: React.FC = () => {
   );
 
   const editableCenter = useEditableField(isCenterValid, (center: string) => {
-    const [lat, lng] = center.split(",").map((el) => el.trim());
+    const [lng, lat] = center.split(",").map((el) => el.trim());
     send({ type: MapEventType.MOVE, center: [+lat, +lng] });
   });
 
   return (
-    <div className="z-10 absolute right-0 sm:right-10 xl:right-1/2 xl:translate-x-1/2 w-full sm:w-auto bottom-11 sm:bottom-8 p-4 sm:px-6 bg-LIGHT_GRAY5 sm:rounded">
-      <div className="flex items-center sm:text-lg justify-center">
+    <div className="z-10 absolute right-0 top-0 sm:right-8 w-full sm:w-auto sm:top-8 p-3 sm:px-5 sm:pb-2 bg-LIGHT_GRAY5 sm:rounded border-b-4 border-LIGHT_GRAY1">
+      <div className="flex items-center justify-center text-xs sm:text-sm">
         <strong className="mr-3">Zoom</strong>
         <div className="mr-3">
           <EditableText
             selectAllOnFocus
-            className="w-[25px] sm:w-[45px]"
+            className="w-[30px]"
             intent={editableZoom.isValid ? Intent.NONE : Intent.DANGER}
             value={editableZoom.isEditing ? editableZoom.value : zoom}
             onChange={editableZoom.setValue}
@@ -59,10 +59,10 @@ const ViewportPanel: React.FC = () => {
           />
         </div>
         <strong className="mr-3">Lat,Lng</strong>
-        <div className="mr-3">
+        <div className="mr-2">
           <EditableText
             selectAllOnFocus
-            className="w-[80px] sm:w-[160px]"
+            className="w-[130px]"
             intent={editableCenter.isValid ? Intent.NONE : Intent.DANGER}
             value={editableCenter.isEditing ? editableCenter.value : center}
             onChange={editableCenter.setValue}
