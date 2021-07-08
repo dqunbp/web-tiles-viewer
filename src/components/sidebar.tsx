@@ -22,6 +22,7 @@ const Sidebar: React.FC = () => {
         id="SidebarTabs"
         selectedTabId={selectedTabId}
         onChange={handleTabChange}
+        animate={false}
       >
         <Tab
           id="layers"
