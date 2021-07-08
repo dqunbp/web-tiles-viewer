@@ -61,6 +61,8 @@ type MapState =
 const handleSyncMapEvents = (_ctx: MapContext, event: MapEvent) => {
   assertEventType(event, MapEventType.MAP_LOAD);
 
+  mapbox.map.resize(); // to prevent canvas bad size bug
+
   mapbox.map.on("zoomend", () => {
     mapService.send({
       type: MapEventType.ZOOM,
