@@ -1,13 +1,8 @@
-import {
-  createMachine,
-  assign,
-  sendParent,
-  StateMachine,
-  DoneInvokeEvent,
-} from "xstate";
+import { createMachine, assign, sendParent, DoneInvokeEvent } from "xstate";
 import { assertEventType } from "./assert-event-type";
 import { DataLayer } from "./mapbox-helpers";
 import mapbox from "./map-wrapper";
+import { MapEventType } from "./map-state-machine";
 
 type TileJSON = {
   tilejson?: string;
@@ -23,39 +18,56 @@ type TileJSON = {
 };
 
 type LayerContext = {
+  data: DataLayer;
   opacity: number;
   visible: boolean;
   tilejson?: TileJSON;
-} & DataLayer;
+};
 
 type LayerState =
   | { value: "created"; context: LayerContext }
   | { value: "loading"; context: LayerContext }
-  | { value: "ready"; context: LayerContext };
+  | { value: "ready"; context: LayerContext }
+  | { value: "deleted"; context: LayerContext };
 
 export enum LayerEventType {
   HIDE = "HIDE",
   DELETE = "DELETE",
+  DUPLICATE = "DUPLICATE",
   TOGGLE_VISIBILITY = "TOGGLE_VISIBILITY",
+  MOVE_TO_TOP = "MOVE_TO_TOP",
 }
 export type LayerEvent =
   | { type: LayerEventType.DELETE }
-  | { type: LayerEventType.TOGGLE_VISIBILITY }
-  | { type: LayerEventType.HIDE };
+  | { type: LayerEventType.DUPLICATE }
+  | { type: LayerEventType.MOVE_TO_TOP }
+  | { type: LayerEventType.TOGGLE_VISIBILITY };
 
-export const createLayerMachine = (
-  layer: DataLayer
-): StateMachine<LayerContext, LayerState, LayerEvent> =>
+export const createLayerMachine = (layer: DataLayer) =>
   createMachine<LayerContext, LayerEvent, LayerState>(
     {
       id: "layer",
       initial: "created",
       context: {
-        ...layer,
+        data: layer,
         opacity: 1,
         visible: true,
       },
-      on: { DELETE: "deleted" },
+      on: {
+        DELETE: ".deleted",
+        DUPLICATE: {
+          actions: sendParent((_ctx) => ({
+            type: MapEventType.DUPLICATE_LAYER,
+            id: _ctx.data.id,
+          })),
+        },
+        MOVE_TO_TOP: {
+          actions: sendParent((_ctx) => ({
+            type: MapEventType.MOVE_TO_TOP_LAYER,
+            id: _ctx.data.id,
+          })),
+        },
+      },
       states: {
         created: {
           always: [
@@ -66,7 +78,7 @@ export const createLayerMachine = (
         loading: {
           invoke: {
             id: "fetchTilejson",
-            src: (_ctx) => fetchTilejson(_ctx.url),
+            src: (_ctx) => fetchTilejson(_ctx.data.url),
             onDone: {
               target: "ready",
               actions: [
@@ -89,9 +101,10 @@ export const createLayerMachine = (
           },
         },
         deleted: {
-          onEntry: sendParent((context) => ({
-            type: "DELETE_LAYER",
-            id: context.id,
+          type: "final",
+          onEntry: sendParent((_ctx) => ({
+            type: MapEventType.DELETE_LAYER,
+            id: _ctx.data.id,
           })),
         },
       },
@@ -107,7 +120,7 @@ async function fetchTilejson(url: string): Promise<TileJSON> {
   return await response.json();
 }
 
-const isTilejsonUrl = (_ctx: LayerContext) => _ctx.urlType === "tilejson";
+const isTilejsonUrl = (_ctx: LayerContext) => _ctx.data.urlType === "tilejson";
 
 const handleTogleVisibility = assign<LayerContext, LayerEvent>({
   visible: (_ctx, event) => {

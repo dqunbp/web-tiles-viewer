@@ -1,7 +1,8 @@
 import * as React from "react";
-import { Tab, Tabs } from "@blueprintjs/core";
+import { Icon, Tab, Tabs } from "@blueprintjs/core";
 import LayersTab from "./layers-tab";
 import StylesTab from "./styles-tab";
+import { IconNames } from "@blueprintjs/icons";
 
 type TabIds = "layers" | "styles";
 
@@ -24,13 +25,23 @@ const Sidebar: React.FC = () => {
       >
         <Tab
           id="layers"
-          title="Data layers"
+          title={
+            <div>
+              <Icon icon={IconNames.LAYERS} />
+              <span className="ml-2">Data layers</span>
+            </div>
+          }
           className="flex-1 text-center"
           panel={<LayersTab />}
         />
         <Tab
           id="styles"
-          title="Map style"
+          title={
+            <div>
+              <Icon icon={IconNames.STYLE} />
+              <span className="ml-2">Map style</span>
+            </div>
+          }
           className="flex-1 text-center"
           panel={<StylesTab />}
         />

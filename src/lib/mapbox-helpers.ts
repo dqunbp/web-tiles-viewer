@@ -80,10 +80,10 @@ function createLayer(id: string, sourceId: string, layer: DataLayer): Layer {
 }
 
 export function addDataLayer(mapAPI: mapboxgl.Map, layer: DataLayer) {
-  const sourceId = `${layer.id}-datasource`;
+  const sourceId = `${layer.id}-source`;
 
   const addSourcePayload = createSource(layer);
-  const addLayerPayload = createLayer(`${layer.id}-datalayer`, sourceId, layer);
+  const addLayerPayload = createLayer(`${layer.id}`, sourceId, layer);
 
   if (!mapAPI.getSource(sourceId)) {
     mapAPI.addSource(sourceId, addSourcePayload);
@@ -92,10 +92,10 @@ export function addDataLayer(mapAPI: mapboxgl.Map, layer: DataLayer) {
 }
 
 export function removeDataLayer(mapAPI: mapboxgl.Map, layerId: string) {
-  const sourceId = `${layerId}-datasource`;
+  const sourceId = `${layerId}-source`;
 
   if (mapAPI.getSource(sourceId)) {
-    mapAPI.removeLayer(`${layerId}-datalayer`);
+    mapAPI.removeLayer(`${layerId}`);
     mapAPI.removeSource(sourceId);
   }
 }

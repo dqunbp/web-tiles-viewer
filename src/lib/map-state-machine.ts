@@ -10,12 +10,14 @@ import {
 } from "xstate";
 import { assertEventType } from "./assert-event-type";
 import { initialMapState, MapStyle } from "./constants";
+import { randomID } from "./get-random-id";
 import { createLayerMachine, LayerEvent } from "./layer-state-machine";
 import mapbox from "./map-wrapper";
 import { addDataLayer, DataLayer, removeDataLayer } from "./mapbox-helpers";
 
 export type LayerRef = ActorRef<LayerEvent>;
-type MapContext = {
+
+export type MapContext = {
   mapStyle: MapStyle;
   center: [number, number];
   zoom: number;
@@ -37,14 +39,19 @@ export enum MapEventType {
   CHANGE_STYLE = "CHANGE_STYLE",
   ADD_LAYER = "ADD_LAYER",
   DELETE_LAYER = "DELETE_LAYER",
+  DUPLICATE_LAYER = "DUPLICATE_LAYER",
+  MOVE_TO_TOP_LAYER = "MOVE_TO_TOP_LAYER",
 }
-type MapEvent =
+
+export type MapEvent =
   | { type: MapEventType.MAP_LOAD }
   | { type: MapEventType.ZOOM; zoom: number; isOriginal?: boolean }
   | { type: MapEventType.MOVE; center: [number, number]; isOriginal?: boolean }
   | { type: MapEventType.CHANGE_STYLE; mapStyle: MapStyle }
   | { type: MapEventType.ADD_LAYER; layer: DataLayer }
-  | { type: MapEventType.DELETE_LAYER; id: string };
+  | { type: MapEventType.DELETE_LAYER; id: string }
+  | { type: MapEventType.MOVE_TO_TOP_LAYER; id: string }
+  | { type: MapEventType.DUPLICATE_LAYER; id: string };
 
 type MapState =
   | { value: "loading"; context: MapContext }
@@ -110,13 +117,18 @@ const handleAddDataLayer = assign<MapContext, MapEvent>({
 
     addDataLayer(mapbox.map, event.layer);
 
-    const newLayer = { ...event.layer };
-    if (newLayer.name === "") newLayer.name = `layer-${_ctx.layers.length + 1}`;
+    const newLayer = {
+      ...event.layer,
+      name:
+        event.layer.name === ""
+          ? `layer-${_ctx.layers.length + 1}`
+          : event.layer.name,
+    };
 
-    return _ctx.layers.concat({
-      ...newLayer,
-      ref: spawn(createLayerMachine(newLayer)),
-    });
+    return [
+      { ...newLayer, ref: spawn(createLayerMachine(newLayer)) },
+      ..._ctx.layers,
+    ];
   },
 });
 
@@ -126,9 +138,45 @@ const handleDeleteDataLayer = assign<MapContext, MapEvent>({
 
     removeDataLayer(mapbox.map, event.id);
 
-    console.log(_ctx.layers);
-
     return [..._ctx.layers].filter((layer) => layer.id !== event.id);
+  },
+});
+
+const handleMoveToTopDataLayer = assign<MapContext, MapEvent>({
+  layers: (_ctx, event) => {
+    assertEventType(event, MapEventType.MOVE_TO_TOP_LAYER);
+
+    mapbox.map.moveLayer(event.id);
+
+    return [
+      ..._ctx.layers.filter((layer) => layer.id === event.id),
+      ..._ctx.layers.filter((layer) => layer.id !== event.id),
+    ];
+  },
+});
+
+const handleDuplicateDataLayer = assign<MapContext, MapEvent>({
+  layers: (_ctx, event) => {
+    assertEventType(event, MapEventType.DUPLICATE_LAYER);
+
+    const index = _ctx.layers.findIndex(({ id }) => id === event.id);
+    const original = _ctx.layers[index];
+    const duplicated = {
+      ...original,
+      id: randomID(),
+      name: `${original.name}-copy`,
+    };
+
+    addDataLayer(mapbox.map, duplicated);
+
+    const result = [..._ctx.layers];
+
+    result.splice(index + 1, 0, {
+      ...duplicated,
+      ref: spawn(createLayerMachine(duplicated)),
+    });
+
+    return result;
   },
 });
 
@@ -150,6 +198,14 @@ const mapMachine = createMachine<MapContext, MapEvent, MapState>(
           CHANGE_STYLE: { actions: ["handleChangeMapStyle"], internal: true },
           ADD_LAYER: { actions: ["handleAddDataLayer"], internal: true },
           DELETE_LAYER: { actions: ["handleDeleteDataLayer"], internal: true },
+          DUPLICATE_LAYER: {
+            actions: ["handleDuplicateDataLayer"],
+            internal: true,
+          },
+          MOVE_TO_TOP_LAYER: {
+            actions: ["handleMoveToTopDataLayer"],
+            internal: true,
+          },
         },
       },
     },
@@ -160,6 +216,8 @@ const mapMachine = createMachine<MapContext, MapEvent, MapState>(
       handleCenterChange,
       handleChangeMapStyle,
       handleAddDataLayer,
+      handleDuplicateDataLayer,
+      handleMoveToTopDataLayer,
       handleDeleteDataLayer,
       handleSyncMapEvents,
     },
