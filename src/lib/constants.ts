@@ -22,8 +22,8 @@ export const initialMapState: InitialMapState = {
     id: MapStyleId.SATELLITE,
     url: "mapbox://styles/mapbox/satellite-v9",
   },
-  center: [-74.5, 40],
-  zoom: 9,
+  center: [-74.4512, 40.0204],
+  zoom: 8.87,
 };
 
 export type LayerType = "raster" | "vector";

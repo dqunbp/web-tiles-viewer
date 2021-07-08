@@ -6,8 +6,8 @@ import { MapEventType, mapService } from "lib/map-state-machine";
 import { useCopyToClipboard } from "hooks/use-copy-to-clipboard";
 import { useEditableField } from "hooks/use-editable-field";
 
-function isFloat(value: string): boolean {
-  return /^-?([0-9]*[.])?[0-9]+$/.test(value);
+function isNumber(value: string): boolean {
+  return !Number.isNaN(value);
 }
 
 function isCenterValid(center: string) {
@@ -17,11 +17,11 @@ function isCenterValid(center: string) {
 
   const [lng, lat] = latLngs.map((el) => el.trim());
 
-  return +lat <= 90 && +lat >= -90 && !Number.isNaN(lng);
+  return +lat >= -90 && +lat <= 90 && isNumber(lng);
 }
 
 function isZoomValid(zoom: string) {
-  return isFloat(zoom) && +zoom >= 0 && +zoom <= 22;
+  return isNumber(zoom) && +zoom >= 0 && +zoom <= 22;
 }
 
 const ViewportPanel: React.FC = () => {
