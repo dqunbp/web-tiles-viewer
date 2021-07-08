@@ -1,13 +1,4 @@
-import {
-  createMachine,
-  assign,
-  interpret,
-  EventObject,
-  AssignAction,
-  spawn,
-  ActorRef,
-  send,
-} from "xstate";
+import { createMachine, assign, interpret, spawn, ActorRef } from "xstate";
 import { assertEventType } from "./assert-event-type";
 import { initialMapState, MapStyle } from "./constants";
 import { randomID } from "./get-random-id";

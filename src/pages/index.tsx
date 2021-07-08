@@ -6,7 +6,7 @@ import Sidebar from "components/sidebar";
 import { inspect } from "@xstate/inspect";
 import ViewportPanel from "components/viewport-panel";
 
-if (typeof window !== "undefined")
+if (typeof window !== "undefined" && process.env.NODE_ENV !== "production")
   inspect({
     iframe: false,
   });
