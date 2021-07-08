@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "lint:ts": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@blueprintjs/core": "^3.45.0",
