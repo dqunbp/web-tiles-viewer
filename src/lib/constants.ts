@@ -46,3 +46,37 @@ export const layerMenuItems: UrlTypeMenuItem[] = [
 ];
 
 export type UrlTypeMenuItem = { value: UrlType; label: string };
+
+export type StyleObject = {
+  id: MapStyleId;
+  label: string;
+  url: string;
+};
+
+export const styles: StyleObject[] = [
+  {
+    id: MapStyleId.SATELLITE,
+    label: "Satellite",
+    url: "mapbox://styles/mapbox/satellite-v9",
+  },
+  {
+    id: MapStyleId.DARK,
+    label: "Dark",
+    url: "mapbox://styles/mapbox/dark-v10",
+  },
+  {
+    id: MapStyleId.LIGHT,
+    label: "Light",
+    url: "mapbox://styles/mapbox/light-v10",
+  },
+  {
+    id: MapStyleId.STREETS,
+    label: "Streets",
+    url: "mapbox://styles/mapbox/streets-v11",
+  },
+  {
+    id: MapStyleId.OUTDOORS,
+    label: "Outdoors",
+    url: "mapbox://styles/mapbox/outdoors-v11",
+  },
+];
