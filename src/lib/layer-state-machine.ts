@@ -27,7 +27,7 @@ type LayerContext = {
 type LayerState =
   | { value: "created"; context: LayerContext }
   | { value: "loading"; context: LayerContext }
-  | { value: "ready"; context: LayerContext }
+  | { value: "idle"; context: LayerContext }
   | { value: "deleted"; context: LayerContext };
 
 export enum LayerEventType {
@@ -72,7 +72,7 @@ export const createLayerMachine = (layer: DataLayer) =>
         created: {
           always: [
             { target: "loading", cond: "isTilejsonUrl" },
-            { target: "ready" },
+            { target: "idle" },
           ],
         },
         loading: {
@@ -80,7 +80,7 @@ export const createLayerMachine = (layer: DataLayer) =>
             id: "fetchTilejson",
             src: (_ctx) => fetchTilejson(_ctx.data.url),
             onDone: {
-              target: "ready",
+              target: "idle",
               actions: [
                 assign({
                   tilejson: (_ctx, event: DoneInvokeEvent<TileJSON>) => {
@@ -92,10 +92,10 @@ export const createLayerMachine = (layer: DataLayer) =>
             },
           },
         },
-        ready: {
+        idle: {
           on: {
             TOGGLE_VISIBILITY: {
-              target: "ready",
+              internal: true,
               actions: ["handleTogleVisibility"],
             },
           },

@@ -46,8 +46,7 @@ export type MapEvent =
 
 type MapState =
   | { value: "loading"; context: MapContext }
-  | { value: "addingLayer"; context: MapContext }
-  | { value: "ready"; context: MapContext };
+  | { value: "idle"; context: MapContext };
 
 const handleSyncMapEvents = (_ctx: MapContext, event: MapEvent) => {
   assertEventType(event, MapEventType.MAP_LOAD);
@@ -181,10 +180,10 @@ const mapMachine = createMachine<MapContext, MapEvent, MapState>(
     states: {
       loading: {
         on: {
-          MAP_LOAD: { target: "ready", actions: ["handleSyncMapEvents"] },
+          MAP_LOAD: { target: "idle", actions: ["handleSyncMapEvents"] },
         },
       },
-      ready: {
+      idle: {
         on: {
           ZOOM: { actions: ["handleZoomChange"], internal: true },
           MOVE: { actions: ["handleCenterChange"], internal: true },
