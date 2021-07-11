@@ -180,23 +180,34 @@ const mapMachine = createMachine<MapContext, MapEvent, MapState>(
     states: {
       loading: {
         on: {
-          MAP_LOAD: { target: "idle", actions: ["handleSyncMapEvents"] },
+          MAP_LOAD: {
+            target: "idle",
+            actions: [
+              "handleSyncMapEvents",
+              // rehydrate initial layers
+              // assign({
+              //   layers: (_ctx) =>
+              //     _ctx.layers.map((layer) => ({
+              //       ...layer,
+              //       ref: spawn(createLayerMachine(layer)),
+              //     })),
+              // }),
+            ],
+          },
         },
       },
       idle: {
         on: {
-          ZOOM: { actions: ["handleZoomChange"], internal: true },
-          MOVE: { actions: ["handleCenterChange"], internal: true },
-          CHANGE_STYLE: { actions: ["handleChangeMapStyle"], internal: true },
-          ADD_LAYER: { actions: ["handleAddDataLayer"], internal: true },
-          DELETE_LAYER: { actions: ["handleDeleteDataLayer"], internal: true },
+          ZOOM: { actions: ["handleZoomChange"] },
+          MOVE: { actions: ["handleCenterChange"] },
+          CHANGE_STYLE: { actions: ["handleChangeMapStyle"] },
+          ADD_LAYER: { actions: ["handleAddDataLayer"] },
+          DELETE_LAYER: { actions: ["handleDeleteDataLayer"] },
           DUPLICATE_LAYER: {
             actions: ["handleDuplicateDataLayer"],
-            internal: true,
           },
           MOVE_TO_TOP_LAYER: {
             actions: ["handleMoveToTopDataLayer"],
-            internal: true,
           },
         },
       },
@@ -217,7 +228,8 @@ const mapMachine = createMachine<MapContext, MapEvent, MapState>(
 );
 
 export const mapService = interpret(mapMachine, { devTools: true });
-mapService.start();
+
+if (process.env.NODE_ENV === "production") mapService.start();
 
 // mapService.onTransition(console.log);
 // mapService.onEvent(console.log);

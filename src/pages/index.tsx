@@ -3,13 +3,29 @@ import Head from "next/head";
 
 import WebMap from "components/web-map";
 import Sidebar from "components/sidebar";
-import { inspect } from "@xstate/inspect";
 import ViewportPanel from "components/viewport-panel";
+import { inspect } from "@xstate/inspect";
+import { mapService } from "lib/map-state-machine";
+// import { DataLayer } from "lib/mapbox-helpers";
 
-if (typeof window !== "undefined" && process.env.NODE_ENV !== "production")
+// const persistedLayers: DataLayer[] = [
+//   {
+//     id: "086fcf",
+//     name: "layer-1",
+//     type: "raster",
+//     urlType: "xyz",
+//     url: "http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga",
+//     sourceLayer: "",
+//   },
+// ];
+
+if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
   inspect({
     iframe: false,
   });
+
+  mapService.start();
+}
 
 export default function Home() {
   return (
@@ -20,7 +36,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="dark absolute w-full h-full">
+      <div className="absolute w-full h-full">
         <WebMap className="h-full w-full inset-0" />
         <Sidebar />
         <ViewportPanel />

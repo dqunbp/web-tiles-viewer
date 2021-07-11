@@ -54,7 +54,7 @@ export const createLayerMachine = (layer: DataLayer) =>
         visible: true,
       },
       on: {
-        DELETE: ".deleted",
+        DELETE: "deleted",
         DUPLICATE: {
           actions: sendParent((_ctx) => ({
             type: MapEventType.DUPLICATE_LAYER,
@@ -95,7 +95,6 @@ export const createLayerMachine = (layer: DataLayer) =>
         idle: {
           on: {
             TOGGLE_VISIBILITY: {
-              internal: true,
               actions: ["handleTogleVisibility"],
             },
           },
