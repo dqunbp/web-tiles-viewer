@@ -5,6 +5,7 @@ import { MapEventType } from "lib/map-state-machine";
 
 const onLoad = () => {
   mapService.send({ type: MapEventType.LOAD });
+  mapbox.map.resize();
 };
 const onMove = () => {
   mapService.send({
