@@ -5,26 +5,22 @@ import WebMap from "components/web-map";
 import Sidebar from "components/sidebar";
 import ViewportPanel from "components/viewport-panel";
 import { inspect } from "@xstate/inspect";
-import { mapService } from "lib/map-state-machine";
-// import { DataLayer } from "lib/mapbox-helpers";
+import { MapContext, mapMachine, mapService } from "lib/map-state-machine";
+import { State } from "xstate";
 
-// const persistedLayers: DataLayer[] = [
-//   {
-//     id: "086fcf",
-//     name: "layer-1",
-//     type: "raster",
-//     urlType: "xyz",
-//     url: "http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga",
-//     sourceLayer: "",
-//   },
-// ];
+if (typeof window !== "undefined") {
+  if (process.env.NODE_ENV !== "production") inspect({ iframe: false });
 
-if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
-  inspect({
-    iframe: false,
-  });
+  const ctx = localStorage.getItem("state");
 
-  mapService.start();
+  const nextContext = ctx
+    ? (JSON.parse(ctx) as MapContext)
+    : mapMachine.initialState.context;
+
+  console.log("Restore from persisted state");
+  console.log(nextContext);
+
+  mapService.start(State.from(mapMachine.initialState, nextContext));
 }
 
 export default function Home() {

@@ -5,6 +5,8 @@ import {
   Card,
   Collapse,
   Intent,
+  NonIdealState,
+  Spinner,
   Tag,
 } from "@blueprintjs/core";
 import { Tooltip2 } from "@blueprintjs/popover2";
@@ -82,13 +84,22 @@ const LayersList: React.FC = () => {
   const [state] = useActor(mapService);
   const layers = state.context.layers;
 
+  if (state.matches("loading"))
+    return (
+      <div className="py-4">
+        <Spinner />
+      </div>
+    );
+
   return (
     <div className="py-4">
-      {layers.length === 0
-        ? "No layers"
-        : layers.map(({ ref, ...layerProps }) => (
-            <Layer key={layerProps.id} layerRef={ref} />
-          ))}
+      {layers.length === 0 ? (
+        <NonIdealState icon={IconNames.LAYERS} title="No layers" />
+      ) : (
+        layers.map(({ ref, ...layerProps }) => (
+          <Layer key={layerProps.id} layerRef={ref} />
+        ))
+      )}
     </div>
   );
 };

@@ -3,35 +3,40 @@ import mapbox from "lib/map-wrapper";
 import { mapService } from "lib/map-state-machine";
 import { MapEventType } from "lib/map-state-machine";
 
+const onLoad = () => mapService.send({ type: MapEventType.LOAD });
+const onMove = () => {
+  mapService.send({
+    type: MapEventType.MOVE,
+    center: [
+      mapbox.map.getCenter().lng.toFixed(4),
+      mapbox.map.getCenter().lat.toFixed(4),
+    ],
+    zoom: mapbox.map.getZoom().toFixed(2),
+  });
+};
+const onMoveEnd = () => {
+  mapService.send({ type: MapEventType.PERSIST });
+};
+
 const onNodeCreated = <T extends HTMLElement>(node: T | null) => {
   if (node === null) return;
 
-  const { zoom, center } = mapService.state.context;
+  const { zoom, center, style } = mapService.state.context;
   const [lng, lat] = center;
 
   mapbox.create(node, {
-    style: "mapbox://styles/mapbox/streets-v11",
+    style: style.url,
     accessToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
     zoom: +zoom,
     center: [+lng, +lat],
   });
-  mapbox.map.once("load", () => {
-    mapService.send({ type: MapEventType.LOAD });
-  });
-  mapbox.map.on("move", () => {
-    mapService.send({
-      type: MapEventType.MOVE,
-      center: [
-        mapbox.map.getCenter().lng.toFixed(4),
-        mapbox.map.getCenter().lat.toFixed(4),
-      ],
-      zoom: mapbox.map.getZoom().toFixed(2),
-    });
-  });
+  mapbox.map.once("load", onLoad);
+  mapbox.map.on("move", onMove);
+  mapbox.map.on("moveend", onMoveEnd);
 };
 
 const WebMap: React.FC<{ className?: string }> = ({ className }) => {
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     return () => {
       mapbox.cleanup(true);
     };

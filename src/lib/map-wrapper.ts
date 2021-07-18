@@ -14,6 +14,7 @@ class MapWrapper {
   }
 
   cleanup(removeMap = false) {
+    console.log("cleanup map");
     if (removeMap) this.map.remove();
     this._map = undefined;
   }
@@ -22,6 +23,8 @@ class MapWrapper {
     container: T,
     options: Omit<mapboxgl.MapboxOptions, "container">
   ) {
+    console.log("create map");
+
     const mapboxMap = new mapboxgl.Map({
       container,
       ...options,

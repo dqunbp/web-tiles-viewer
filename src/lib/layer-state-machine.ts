@@ -77,7 +77,14 @@ export const createLayerMachine = (layer: DataLayer) =>
       },
       states: {
         created: {
-          entry: (_ctx) => addMapLayer(mapbox.map, _ctx.data),
+          entry: (_ctx) => {
+            console.log("entry");
+
+            mapbox.map.once("error", (...args) =>
+              console.log("error adding layer", args)
+            );
+            addMapLayer(mapbox.map, _ctx.data);
+          },
           always: [
             { target: "loading", cond: "isTilejsonUrl" },
             { target: "idle" },

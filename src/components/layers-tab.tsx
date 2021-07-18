@@ -45,8 +45,8 @@ const LayersTab: React.FC = () => {
       <Button
         fill
         large
-        icon={IconNames.ADD}
-        text="Add new layer"
+        icon={IconNames.NEW_LAYER}
+        text="Add a new layer"
         onClick={onToggle}
       />
       <Drawer size={drawerWidth} isOpen={isOpen} onClose={onClose}>

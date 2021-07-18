@@ -8,12 +8,13 @@ import { addMapLayer, DataLayer } from "./mapbox-helpers";
 export type LayerRef = ActorRef<LayerEvent>;
 
 type MapCenter = [string, string];
+type HydratedLayer = DataLayer & { ref: LayerRef };
 
 export type MapContext = {
   style: MapStyle;
   center: MapCenter;
   zoom: string;
-  layers: (DataLayer & { ref: LayerRef })[];
+  layers: HydratedLayer[];
 };
 
 export enum MapEventType {
@@ -26,10 +27,12 @@ export enum MapEventType {
   DELETE_LAYER = "DELETE_LAYER",
   DUPLICATE_LAYER = "DUPLICATE_LAYER",
   MOVE_TO_TOP_LAYER = "MOVE_TO_TOP_LAYER",
+  PERSIST = "PERSIST",
 }
 
 export type MapEvent =
   | { type: MapEventType.LOAD }
+  | { type: MapEventType.PERSIST }
   | { type: MapEventType.MOVE; center: [string, string]; zoom: string }
   | { type: MapEventType.SET_CENTER; center: [string, string] }
   | { type: MapEventType.SET_ZOOM; zoom: string }
@@ -121,26 +124,48 @@ const addLayer = assign<MapContext, MapEvent>({
   },
 });
 
-const mapMachine = createMachine<MapContext, MapEvent>(
+const persist = () => {
+  localStorage.setItem("state", JSON.stringify(mapService.state.context));
+};
+
+const reduceLayers = (acc: HydratedLayer[], layer: DataLayer) => [
+  {
+    ...layer,
+    ref: spawn(createLayerMachine(layer)),
+  },
+  ...acc,
+];
+
+export const mapMachine = createMachine<MapContext, MapEvent>(
   {
     id: "map",
     initial: "loading",
     context: mapContext,
+    on: { PERSIST: { actions: "persist" } },
     states: {
       loading: {
         on: {
-          LOAD: { target: "idle", actions: [] },
+          LOAD: {
+            target: "idle",
+            actions: [
+              // rehydrate initial layers
+              assign({
+                layers: (_ctx) =>
+                  _ctx.layers.reduceRight<HydratedLayer[]>(reduceLayers, []),
+              }),
+            ],
+          },
         },
       },
       idle: {
         on: {
-          CHANGE_STYLE: { actions: ["changeStyle"] },
+          CHANGE_STYLE: { actions: ["changeStyle", "persist"] },
           MOVE: { actions: ["updateViewport"] },
-          ADD_LAYER: { actions: ["addLayer"] },
-          DELETE_LAYER: { actions: ["deleteLayer"] },
-          MOVE_TO_TOP_LAYER: { actions: ["moveToTopLayer"] },
-          SET_CENTER: { actions: ["setCenter"] },
-          SET_ZOOM: { actions: ["setZoom"] },
+          ADD_LAYER: { actions: ["addLayer", "persist"] },
+          DELETE_LAYER: { actions: ["deleteLayer", "persist"] },
+          MOVE_TO_TOP_LAYER: { actions: ["moveToTopLayer", "persist"] },
+          SET_CENTER: { actions: ["setCenter", "persist"] },
+          SET_ZOOM: { actions: ["setZoom", "persist"] },
         },
       },
     },
@@ -154,6 +179,7 @@ const mapMachine = createMachine<MapContext, MapEvent>(
       moveToTopLayer,
       setCenter,
       setZoom,
+      persist,
     },
   }
 );
