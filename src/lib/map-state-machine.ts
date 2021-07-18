@@ -1,32 +1,26 @@
 import { createMachine, assign, interpret, spawn, ActorRef } from "xstate";
 import { assertEventType } from "./assert-event-type";
-import { initialMapState, MapStyle } from "./constants";
-import { randomID } from "./get-random-id";
+import { MapStyle, MapStyleId } from "./constants";
 import { createLayerMachine, LayerEvent } from "./layer-state-machine";
 import mapbox from "./map-wrapper";
-import { addDataLayer, DataLayer, removeDataLayer } from "./mapbox-helpers";
+import { addMapLayer, DataLayer } from "./mapbox-helpers";
 
 export type LayerRef = ActorRef<LayerEvent>;
 
+type MapCenter = [string, string];
+
 export type MapContext = {
-  mapStyle: MapStyle;
-  center: [number, number];
-  zoom: number;
+  style: MapStyle;
+  center: MapCenter;
+  zoom: string;
   layers: (DataLayer & { ref: LayerRef })[];
 };
 
-const { style, zoom, center } = initialMapState;
-const context: MapContext = {
-  mapStyle: style,
-  center: center,
-  zoom: zoom,
-  layers: [],
-};
-
 export enum MapEventType {
-  MAP_LOAD = "MAP_LOAD",
-  ZOOM = "ZOOM",
+  LOAD = "LOAD",
   MOVE = "MOVE",
+  SET_CENTER = "SET_CENTER",
+  SET_ZOOM = "SET_ZOOM",
   CHANGE_STYLE = "CHANGE_STYLE",
   ADD_LAYER = "ADD_LAYER",
   DELETE_LAYER = "DELETE_LAYER",
@@ -35,79 +29,82 @@ export enum MapEventType {
 }
 
 export type MapEvent =
-  | { type: MapEventType.MAP_LOAD }
-  | { type: MapEventType.ZOOM; zoom: number; isOriginal?: boolean }
-  | { type: MapEventType.MOVE; center: [number, number]; isOriginal?: boolean }
-  | { type: MapEventType.CHANGE_STYLE; mapStyle: MapStyle }
+  | { type: MapEventType.LOAD }
+  | { type: MapEventType.MOVE; center: [string, string]; zoom: string }
+  | { type: MapEventType.SET_CENTER; center: [string, string] }
+  | { type: MapEventType.SET_ZOOM; zoom: string }
+  | { type: MapEventType.CHANGE_STYLE; style: MapStyle }
   | { type: MapEventType.ADD_LAYER; layer: DataLayer }
   | { type: MapEventType.DELETE_LAYER; id: string }
   | { type: MapEventType.MOVE_TO_TOP_LAYER; id: string }
   | { type: MapEventType.DUPLICATE_LAYER; id: string };
 
-type MapState =
-  | { value: "loading"; context: MapContext }
-  | { value: "idle"; context: MapContext };
-
-const handleSyncMapEvents = (_ctx: MapContext, event: MapEvent) => {
-  assertEventType(event, MapEventType.MAP_LOAD);
-
-  mapbox.map.resize(); // to prevent canvas bad size bug
-
-  mapbox.map.on("zoomend", () => {
-    mapService.send({
-      type: MapEventType.ZOOM,
-      zoom: +mapbox.map.getZoom().toFixed(2),
-      isOriginal: true,
-    });
-  });
-  mapbox.map.on("moveend", () => {
-    mapService.send({
-      type: MapEventType.MOVE,
-      center: [
-        +mapbox.map.getCenter().lng.toFixed(4),
-        +mapbox.map.getCenter().lat.toFixed(4),
-      ],
-      isOriginal: true,
-    });
-  });
+const mapContext: MapContext = {
+  style: {
+    id: MapStyleId.SATELLITE,
+    url: "mapbox://styles/mapbox/satellite-v9",
+  },
+  center: ["-74.4512", "40.0204"],
+  zoom: "8",
+  layers: [],
 };
 
-const handleZoomChange = assign<MapContext, MapEvent>({
-  zoom: (_ctx, event) => {
-    assertEventType(event, MapEventType.ZOOM);
+const setCenter = assign<MapContext, MapEvent>((_ctx, event) => {
+  assertEventType(event, MapEventType.SET_CENTER);
 
-    if (!event.isOriginal) mapbox.map.setZoom(event.zoom);
-    return event.zoom;
+  const [lng, lat] = event.center;
+
+  mapbox.map.setCenter([+lat, +lng]);
+
+  return { center: event.center };
+});
+
+const setZoom = assign<MapContext, MapEvent>((_ctx, event) => {
+  assertEventType(event, MapEventType.SET_ZOOM);
+
+  mapbox.map.setZoom(+event.zoom);
+
+  return { zoom: event.zoom };
+});
+
+const updateViewport = assign<MapContext, MapEvent>((_ctx, event) => {
+  assertEventType(event, MapEventType.MOVE);
+  return { center: event.center, zoom: event.zoom };
+});
+
+const changeStyle = assign<MapContext, MapEvent>((_ctx, event) => {
+  assertEventType(event, MapEventType.CHANGE_STYLE);
+
+  mapbox.map.once("styledata", () => {
+    _ctx.layers.forEach((layer) => addMapLayer(mapbox.map, layer));
+  });
+  mapbox.map.setStyle(event.style.url);
+
+  return { style: event.style };
+});
+
+const deleteLayer = assign<MapContext, MapEvent>({
+  layers: (_ctx, event) => {
+    assertEventType(event, MapEventType.DELETE_LAYER);
+
+    return [..._ctx.layers].filter((layer) => layer.id !== event.id);
   },
 });
 
-const handleCenterChange = assign<MapContext, MapEvent>({
-  center: (_ctx, event) => {
-    assertEventType(event, MapEventType.MOVE);
+const moveToTopLayer = assign<MapContext, MapEvent>({
+  layers: (_ctx, event) => {
+    assertEventType(event, MapEventType.MOVE_TO_TOP_LAYER);
 
-    if (!event.isOriginal) mapbox.map.setCenter(event.center);
-    return event.center;
+    return [
+      ..._ctx.layers.filter((layer) => layer.id === event.id),
+      ..._ctx.layers.filter((layer) => layer.id !== event.id),
+    ];
   },
 });
 
-const handleChangeMapStyle = assign<MapContext, MapEvent>({
-  mapStyle: (_ctx, event) => {
-    assertEventType(event, MapEventType.CHANGE_STYLE);
-
-    mapbox.map.once("styledata", () => {
-      _ctx.layers.forEach((layer) => addDataLayer(mapbox.map, layer));
-    });
-    mapbox.map.setStyle(event.mapStyle.url);
-
-    return event.mapStyle;
-  },
-});
-
-const handleAddDataLayer = assign<MapContext, MapEvent>({
+const addLayer = assign<MapContext, MapEvent>({
   layers: (_ctx, event) => {
     assertEventType(event, MapEventType.ADD_LAYER);
-
-    addDataLayer(mapbox.map, event.layer);
 
     const newLayer = {
       ...event.layer,
@@ -124,113 +121,43 @@ const handleAddDataLayer = assign<MapContext, MapEvent>({
   },
 });
 
-const handleDeleteDataLayer = assign<MapContext, MapEvent>({
-  layers: (_ctx, event) => {
-    assertEventType(event, MapEventType.DELETE_LAYER);
-
-    removeDataLayer(mapbox.map, event.id);
-
-    return [..._ctx.layers].filter((layer) => layer.id !== event.id);
-  },
-});
-
-const handleMoveToTopDataLayer = assign<MapContext, MapEvent>({
-  layers: (_ctx, event) => {
-    assertEventType(event, MapEventType.MOVE_TO_TOP_LAYER);
-
-    mapbox.map.moveLayer(event.id);
-
-    return [
-      ..._ctx.layers.filter((layer) => layer.id === event.id),
-      ..._ctx.layers.filter((layer) => layer.id !== event.id),
-    ];
-  },
-});
-
-const handleDuplicateDataLayer = assign<MapContext, MapEvent>({
-  layers: (_ctx, event) => {
-    assertEventType(event, MapEventType.DUPLICATE_LAYER);
-
-    const index = _ctx.layers.findIndex(({ id }) => id === event.id);
-    const original = _ctx.layers[index];
-    const duplicated = {
-      ...original,
-      id: randomID(),
-      name: `${original.name}-copy`,
-    };
-
-    addDataLayer(mapbox.map, duplicated);
-
-    const result = [..._ctx.layers];
-
-    result.splice(index + 1, 0, {
-      ...duplicated,
-      ref: spawn(createLayerMachine(duplicated)),
-    });
-
-    return result;
-  },
-});
-
-const mapMachine = createMachine<MapContext, MapEvent, MapState>(
+const mapMachine = createMachine<MapContext, MapEvent>(
   {
     id: "map",
     initial: "loading",
-    context,
+    context: mapContext,
     states: {
       loading: {
         on: {
-          MAP_LOAD: {
-            target: "idle",
-            actions: [
-              "handleSyncMapEvents",
-              // rehydrate initial layers
-              // assign({
-              //   layers: (_ctx) =>
-              //     _ctx.layers.map((layer) => ({
-              //       ...layer,
-              //       ref: spawn(createLayerMachine(layer)),
-              //     })),
-              // }),
-            ],
-          },
+          LOAD: { target: "idle", actions: [] },
         },
       },
       idle: {
         on: {
-          ZOOM: { actions: ["handleZoomChange"] },
-          MOVE: { actions: ["handleCenterChange"] },
-          CHANGE_STYLE: { actions: ["handleChangeMapStyle"] },
-          ADD_LAYER: { actions: ["handleAddDataLayer"] },
-          DELETE_LAYER: { actions: ["handleDeleteDataLayer"] },
-          DUPLICATE_LAYER: {
-            actions: ["handleDuplicateDataLayer"],
-          },
-          MOVE_TO_TOP_LAYER: {
-            actions: ["handleMoveToTopDataLayer"],
-          },
+          CHANGE_STYLE: { actions: ["changeStyle"] },
+          MOVE: { actions: ["updateViewport"] },
+          ADD_LAYER: { actions: ["addLayer"] },
+          DELETE_LAYER: { actions: ["deleteLayer"] },
+          MOVE_TO_TOP_LAYER: { actions: ["moveToTopLayer"] },
+          SET_CENTER: { actions: ["setCenter"] },
+          SET_ZOOM: { actions: ["setZoom"] },
         },
       },
     },
   },
   {
     actions: {
-      handleZoomChange,
-      handleCenterChange,
-      handleChangeMapStyle,
-      handleAddDataLayer,
-      handleDuplicateDataLayer,
-      handleMoveToTopDataLayer,
-      handleDeleteDataLayer,
-      handleSyncMapEvents,
+      updateViewport,
+      changeStyle,
+      addLayer,
+      deleteLayer,
+      moveToTopLayer,
+      setCenter,
+      setZoom,
     },
   }
 );
 
-export const mapService = interpret(mapMachine, { devTools: true });
-
-if (process.env.NODE_ENV === "production") mapService.start();
-
-// mapService.onTransition(console.log);
-// mapService.onEvent(console.log);
-// mapService.onChange(console.log);
+export const mapService = interpret(mapMachine, {
+  devTools: process.env.NODE_ENV !== "production",
+});

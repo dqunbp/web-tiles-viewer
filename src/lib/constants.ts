@@ -5,6 +5,7 @@ export enum MapStyleId {
   STREETS = "STREETS",
   OUTDOORS = "OUTDOORS",
 }
+
 export type MapStyle =
   | { id: MapStyleId.DARK; url: "mapbox://styles/mapbox/dark-v10" }
   | { id: MapStyleId.LIGHT; url: "mapbox://styles/mapbox/light-v10" }

@@ -1,8 +1,8 @@
 import { createMachine, assign, sendParent, DoneInvokeEvent } from "xstate";
-import { assertEventType } from "./assert-event-type";
-import { DataLayer } from "./mapbox-helpers";
+import { addMapLayer, DataLayer, removeMapLayer } from "./mapbox-helpers";
 import mapbox from "./map-wrapper";
 import { MapEventType } from "./map-state-machine";
+import { randomID } from "./get-random-id";
 
 type TileJSON = {
   tilejson?: string;
@@ -57,19 +57,27 @@ export const createLayerMachine = (layer: DataLayer) =>
         DELETE: "deleted",
         DUPLICATE: {
           actions: sendParent((_ctx) => ({
-            type: MapEventType.DUPLICATE_LAYER,
-            id: _ctx.data.id,
+            type: MapEventType.ADD_LAYER,
+            layer: {
+              ..._ctx.data,
+              id: randomID(),
+              name: `${_ctx.data.name}-copy`,
+            },
           })),
         },
         MOVE_TO_TOP: {
-          actions: sendParent((_ctx) => ({
-            type: MapEventType.MOVE_TO_TOP_LAYER,
-            id: _ctx.data.id,
-          })),
+          actions: [
+            (_ctx) => mapbox.map.moveLayer(_ctx.data.id),
+            sendParent((_ctx) => ({
+              type: MapEventType.MOVE_TO_TOP_LAYER,
+              id: _ctx.data.id,
+            })),
+          ],
         },
       },
       states: {
         created: {
+          entry: (_ctx) => addMapLayer(mapbox.map, _ctx.data),
           always: [
             { target: "loading", cond: "isTilejsonUrl" },
             { target: "idle" },
@@ -95,21 +103,23 @@ export const createLayerMachine = (layer: DataLayer) =>
         idle: {
           on: {
             TOGGLE_VISIBILITY: {
-              actions: ["handleTogleVisibility"],
+              actions: assign({ visible: (_ctx) => !_ctx.visible }),
             },
           },
         },
         deleted: {
           type: "final",
-          onEntry: sendParent((_ctx) => ({
-            type: MapEventType.DELETE_LAYER,
-            id: _ctx.data.id,
-          })),
+          entry: [
+            (_ctx) => removeMapLayer(mapbox.map, _ctx.data.id),
+            sendParent((_ctx) => ({
+              type: MapEventType.DELETE_LAYER,
+              id: _ctx.data.id,
+            })),
+          ],
         },
       },
     },
     {
-      actions: { handleTogleVisibility },
       guards: { isTilejsonUrl },
     }
   );
@@ -120,14 +130,6 @@ async function fetchTilejson(url: string): Promise<TileJSON> {
 }
 
 const isTilejsonUrl = (_ctx: LayerContext) => _ctx.data.urlType === "tilejson";
-
-const handleTogleVisibility = assign<LayerContext, LayerEvent>({
-  visible: (_ctx, event) => {
-    assertEventType(event, LayerEventType.TOGGLE_VISIBILITY);
-
-    return !_ctx.visible;
-  },
-});
 
 const fitBounds = (tilejson: TileJSON): void => {
   const bounds = tilejson?.bounds;

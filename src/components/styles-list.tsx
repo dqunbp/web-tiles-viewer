@@ -11,12 +11,12 @@ const Style: React.FC<StyleObject> = (style) => {
   const handleClickStyle = (nextStyle: StyleObject) => () => {
     send({
       type: MapEventType.CHANGE_STYLE,
-      mapStyle: { id: nextStyle.id, url: nextStyle.url } as MapStyle,
+      style: { id: nextStyle.id, url: nextStyle.url } as MapStyle,
     });
   };
 
   const hightlightClass = `${
-    state.context.mapStyle.id === style.id
+    state.context.style.id === style.id
       ? "ring-GREEN5"
       : "ring-GRAY5 hover:ring-BLUE5"
   }`;

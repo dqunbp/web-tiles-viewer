@@ -79,7 +79,7 @@ function createLayer(id: string, sourceId: string, layer: DataLayer): Layer {
   }
 }
 
-export function addDataLayer(mapAPI: mapboxgl.Map, layer: DataLayer) {
+export function addMapLayer(mapAPI: mapboxgl.Map, layer: DataLayer) {
   const sourceId = `${layer.id}-source`;
 
   const addSourcePayload = createSource(layer);
@@ -91,7 +91,7 @@ export function addDataLayer(mapAPI: mapboxgl.Map, layer: DataLayer) {
   }
 }
 
-export function removeDataLayer(mapAPI: mapboxgl.Map, layerId: string) {
+export function removeMapLayer(mapAPI: mapboxgl.Map, layerId: string) {
   const sourceId = `${layerId}-source`;
 
   if (mapAPI.getSource(sourceId)) {

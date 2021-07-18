@@ -36,7 +36,7 @@ const ViewportPanel: React.FC = () => {
 
   const editableZoom = useEditableField(isZoomValid, (nextZoom: string) => {
     if (nextZoom === zoom) return;
-    send({ type: MapEventType.ZOOM, zoom: +nextZoom });
+    send({ type: MapEventType.SET_ZOOM, zoom: nextZoom });
   });
 
   const editableCenter = useEditableField(
@@ -44,7 +44,7 @@ const ViewportPanel: React.FC = () => {
     (nextCenter: string) => {
       if (nextCenter === center) return;
       const [lng, lat] = nextCenter.split(",").map((el) => el.trim());
-      send({ type: MapEventType.MOVE, center: [+lat, +lng] });
+      send({ type: MapEventType.SET_CENTER, center: [lng, lat] });
     }
   );
 

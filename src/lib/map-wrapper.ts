@@ -1,5 +1,4 @@
 import mapboxgl from "mapbox-gl";
-import { initialMapState } from "./constants";
 
 class MapWrapper {
   private _map?: mapboxgl.Map;
@@ -7,36 +6,31 @@ class MapWrapper {
   get map() {
     if (typeof this._map === "undefined")
       throw new Error("Cannot access mapbox map before inilizing it");
-
     return this._map;
   }
 
-  get initialized() {
-    return !!this._map;
+  set map(instance: mapboxgl.Map) {
+    this._map = instance;
+  }
+
+  cleanup(removeMap = false) {
+    if (removeMap) this.map.remove();
+    this._map = undefined;
   }
 
   create<T extends HTMLElement>(
-    node: T | null,
-    cb?: (map: mapboxgl.Map) => void
+    container: T,
+    options: Omit<mapboxgl.MapboxOptions, "container">
   ) {
-    if (!node) return;
-
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
-    this._map = new mapboxgl.Map({
-      container: node,
-      zoom: initialMapState.zoom,
-      center: initialMapState.center,
-      style: initialMapState.style.url,
+    const mapboxMap = new mapboxgl.Map({
+      container,
+      ...options,
     });
 
-    if (cb !== undefined) cb(this._map);
-  }
-
-  remove() {
-    this._map = undefined;
+    this._map = mapboxMap;
   }
 }
 
-const map = new MapWrapper();
+const wrapper = new MapWrapper();
 
-export default map;
+export default wrapper;
