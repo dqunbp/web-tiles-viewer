@@ -35,7 +35,7 @@ const onNodeCreated = <T extends HTMLElement>(node: T | null) => {
   mapbox.map.once("load", onLoad);
   mapbox.map.on("move", onMove);
   mapbox.map.on("moveend", onMoveEnd);
-  mapbox.map.resize();
+  mapbox.map.once("dataloading", () => mapbox.map.resize());
 };
 
 const WebMap: React.FC<{ className?: string }> = ({ className }) => {
