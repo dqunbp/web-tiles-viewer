@@ -3,7 +3,9 @@ import mapbox from "lib/map-wrapper";
 import { mapService } from "lib/map-state-machine";
 import { MapEventType } from "lib/map-state-machine";
 
-const onLoad = () => mapService.send({ type: MapEventType.LOAD });
+const onLoad = () => {
+  mapService.send({ type: MapEventType.LOAD });
+};
 const onMove = () => {
   mapService.send({
     type: MapEventType.MOVE,
@@ -33,6 +35,7 @@ const onNodeCreated = <T extends HTMLElement>(node: T | null) => {
   mapbox.map.once("load", onLoad);
   mapbox.map.on("move", onMove);
   mapbox.map.on("moveend", onMoveEnd);
+  mapbox.map.resize();
 };
 
 const WebMap: React.FC<{ className?: string }> = ({ className }) => {
