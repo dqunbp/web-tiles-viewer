@@ -55,7 +55,7 @@ const ViewportPanel: React.FC = () => {
         <div className="mr-3">
           <EditableText
             selectAllOnFocus
-            className="w-[30px]"
+            className="w-[40px]"
             intent={editableZoom.isValid ? Intent.NONE : Intent.DANGER}
             value={editableZoom.isEditing ? editableZoom.value : zoom}
             onChange={editableZoom.setValue}
