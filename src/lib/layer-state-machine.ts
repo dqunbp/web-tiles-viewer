@@ -17,7 +17,7 @@ type TileJSON = {
   bounds: [number, number, number, number];
 };
 
-type LayerContext = {
+export type LayerContext = {
   data: DataLayer;
   opacity: number;
   visible: boolean;
@@ -36,12 +36,14 @@ export enum LayerEventType {
   DUPLICATE = "DUPLICATE",
   TOGGLE_VISIBILITY = "TOGGLE_VISIBILITY",
   MOVE_TO_TOP = "MOVE_TO_TOP",
+  CHANGE_OPACITY = "CHANGE_OPACITY",
 }
 export type LayerEvent =
   | { type: LayerEventType.DELETE }
   | { type: LayerEventType.DUPLICATE }
   | { type: LayerEventType.MOVE_TO_TOP }
-  | { type: LayerEventType.TOGGLE_VISIBILITY };
+  | { type: LayerEventType.TOGGLE_VISIBILITY }
+  | { type: LayerEventType.CHANGE_OPACITY; value: number };
 
 export const createLayerMachine = (layer: DataLayer) =>
   createMachine<LayerContext, LayerEvent, LayerState>(
@@ -109,8 +111,30 @@ export const createLayerMachine = (layer: DataLayer) =>
         },
         idle: {
           on: {
+            CHANGE_OPACITY: {
+              actions: [
+                assign({ opacity: (_ctx, event) => event.value }),
+                (_ctx) =>
+                  mapbox.map.setPaintProperty(
+                    _ctx.data.id,
+                    _ctx.data.type === "raster"
+                      ? "raster-opacity"
+                      : "fill-opacity",
+                    _ctx.opacity
+                  ),
+              ],
+            },
             TOGGLE_VISIBILITY: {
-              actions: assign({ visible: (_ctx) => !_ctx.visible }),
+              actions: [
+                assign({ visible: (_ctx) => !_ctx.visible }),
+                (_ctx) => {
+                  mapbox.map.setLayoutProperty(
+                    _ctx.data.id,
+                    "visibility",
+                    !_ctx.visible ? "none" : "visible"
+                  );
+                },
+              ],
             },
           },
         },

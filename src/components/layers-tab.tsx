@@ -11,6 +11,7 @@ import {
   DrawerSize,
   Menu,
   MenuItem,
+  Position,
 } from "@blueprintjs/core";
 import { useDisclosure } from "hooks/use-disclosure";
 import AddLayerForm from "./add-layer-form";
@@ -41,7 +42,7 @@ const LayersTab: React.FC = () => {
   };
 
   return (
-    <div className="px-4 h-full w-full">
+    <div className="px-4 h-full w-full text-left">
       <Button
         fill
         large
@@ -49,7 +50,12 @@ const LayersTab: React.FC = () => {
         text="Add a new layer"
         onClick={onToggle}
       />
-      <Drawer size={drawerWidth} isOpen={isOpen} onClose={onClose}>
+      <Drawer
+        position={Position.LEFT}
+        size={drawerWidth}
+        isOpen={isOpen}
+        onClose={onClose}
+      >
         <div className={Classes.DRAWER_BODY}>
           <div className={Classes.DIALOG_BODY}>
             <AddLayerForm onSubmit={handleAddNewLayer} onClose={onClose} />

@@ -72,7 +72,7 @@ function createLayer(id: string, sourceId: string, layer: DataLayer): Layer {
         id,
         type: "fill",
         source: sourceId,
-        layout: {},
+        layout: { visibility: "visible" },
         paint: { "fill-color": "green" },
         "source-layer": layer.sourceLayer!,
       };

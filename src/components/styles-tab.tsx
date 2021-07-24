@@ -4,7 +4,7 @@ import StylesList from "./styles-list";
 
 const StylesTab: React.FC = () => {
   return (
-    <div className="px-4 h-full w-full">
+    <div className="px-4 h-full w-full text-left">
       {/* <AddLayerForm /> */}
       <StylesList />
     </div>
