@@ -42,7 +42,7 @@ const onNodeCreated = <T extends HTMLElement>(node: T | null) => {
 const WebMap: React.FC<{ className?: string }> = ({ className }) => {
   React.useLayoutEffect(() => {
     return () => {
-      mapbox.cleanup(true);
+      mapbox.cleanup();
     };
   }, []);
 

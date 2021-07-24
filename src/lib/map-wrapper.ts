@@ -13,9 +13,11 @@ class MapWrapper {
     this._map = instance;
   }
 
-  cleanup(removeMap = false) {
+  cleanup() {
     console.log("cleanup map");
-    if (removeMap) this.map.remove();
+    if (typeof this._map === "undefined")
+      throw new Error("Cannot remove mapbox map before inilizing");
+    this._map.remove();
     this._map = undefined;
   }
 
