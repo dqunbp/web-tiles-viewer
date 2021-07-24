@@ -70,7 +70,7 @@ const Layer: React.FC<{ layerRef: LayerRef }> = ({ layerRef }) => {
         </ButtonGroup>
       </Card>
       <Collapse isOpen={isOpen}>
-        <div className="bg-LIGHT_GRAY1 rounded-b mx-1 p-1 space-y-1">
+        <div className="bg-WHITE border-2 border-t rounded-b mx-1 p-1 space-y-1">
           <div className="px-6 pt-1">
             <p className="mb-1 font-semibold">Opacity</p>
             <Slider
