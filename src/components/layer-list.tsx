@@ -18,7 +18,7 @@ const LayersList: React.FC = () => {
     );
 
   return (
-    <div className="py-4">
+    <div className="py-4 space-y-2">
       {layers.length === 0 ? (
         <NonIdealState icon={IconNames.LAYERS} title="No layers" />
       ) : (

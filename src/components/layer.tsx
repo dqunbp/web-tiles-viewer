@@ -29,7 +29,7 @@ const Layer: React.FC<{ layerRef: LayerRef }> = ({ layerRef }) => {
   const { isOpen, onToggle } = useDisclosure();
 
   return (
-    <div className="mb-2">
+    <div className="">
       <Card className="py-2 px-3 last:mb-0 flex justify-between items-center border-l-4">
         <div className="flex flex-col items-start">
           <div className="font-bold font-mono text-md">
