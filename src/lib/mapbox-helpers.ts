@@ -66,7 +66,12 @@ type Layer =
 function createLayer(id: string, sourceId: string, layer: DataLayer): Layer {
   switch (layer.type) {
     case "raster":
-      return { id, type: "raster", source: sourceId };
+      return {
+        id,
+        type: "raster",
+        source: sourceId,
+        layout: { visibility: "visible" },
+      };
     case "vector":
       return {
         id,
@@ -80,7 +85,7 @@ function createLayer(id: string, sourceId: string, layer: DataLayer): Layer {
 }
 
 export function addMapLayer(mapAPI: mapboxgl.Map, layer: DataLayer) {
-  const sourceId = `${layer.id}-source`;
+  const sourceId = `${layer.id}`;
 
   const addSourcePayload = createSource(layer);
   const addLayerPayload = createLayer(`${layer.id}`, sourceId, layer);

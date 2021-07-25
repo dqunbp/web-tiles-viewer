@@ -3,6 +3,7 @@ import { addMapLayer, DataLayer, removeMapLayer } from "./mapbox-helpers";
 import mapbox from "./map-wrapper";
 import { MapEventType } from "./map-state-machine";
 import { randomID } from "./get-random-id";
+import { mapUtils } from "./mapbox-api-utils";
 
 type TileJSON = {
   tilejson?: string;
@@ -114,26 +115,19 @@ export const createLayerMachine = (layer: DataLayer) =>
             CHANGE_OPACITY: {
               actions: [
                 assign({ opacity: (_ctx, event) => event.value }),
-                (_ctx) =>
-                  mapbox.map.setPaintProperty(
-                    _ctx.data.id,
-                    _ctx.data.type === "raster"
-                      ? "raster-opacity"
-                      : "fill-opacity",
-                    _ctx.opacity
-                  ),
+                (_ctx, event) =>
+                  mapUtils(mapbox.map)
+                    .getLayer(_ctx.data.id)
+                    .setOpacity(event.value),
               ],
             },
             TOGGLE_VISIBILITY: {
               actions: [
                 assign({ visible: (_ctx) => !_ctx.visible }),
-                (_ctx) => {
-                  mapbox.map.setLayoutProperty(
-                    _ctx.data.id,
-                    "visibility",
-                    !_ctx.visible ? "none" : "visible"
-                  );
-                },
+                (_ctx) =>
+                  mapUtils(mapbox.map)
+                    .getLayer(_ctx.data.id)
+                    .toggleVisibility(),
               ],
             },
           },
