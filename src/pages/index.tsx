@@ -5,7 +5,7 @@ import WebMap from "components/web-map";
 import Sidebar from "components/sidebar";
 import ViewportPanel from "components/viewport-panel";
 import { inspect } from "@xstate/inspect";
-import { MapContext, mapMachine, mapService } from "lib/map-state-machine";
+import { MapContext, mapMachine, mapService } from "machines/mapbox-map";
 import { State } from "xstate";
 
 if (typeof window !== "undefined") {

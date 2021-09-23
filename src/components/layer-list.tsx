@@ -2,7 +2,7 @@ import * as React from "react";
 import { NonIdealState, Spinner } from "@blueprintjs/core";
 
 import { useActor } from "@xstate/react";
-import { mapService } from "lib/map-state-machine";
+import { mapService } from "machines/mapbox-map";
 import { IconNames } from "@blueprintjs/icons";
 import Layer from "./layer";
 

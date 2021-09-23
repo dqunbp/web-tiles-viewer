@@ -12,9 +12,9 @@ import {
 import { Tooltip2 } from "@blueprintjs/popover2";
 
 import { useActor } from "@xstate/react";
-import { LayerRef } from "lib/map-state-machine";
+import { LayerRef } from "machines/mapbox-map";
 import { IconNames } from "@blueprintjs/icons";
-import { LayerContext, LayerEventType } from "lib/layer-state-machine";
+import { LayerContext, LayerEventType } from "machines/layer";
 import { useDisclosure } from "hooks/use-disclosure";
 
 const Layer: React.FC<{ layerRef: LayerRef }> = ({ layerRef }) => {

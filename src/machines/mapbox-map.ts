@@ -1,9 +1,9 @@
 import { createMachine, assign, interpret, spawn, ActorRef } from "xstate";
-import { assertEventType } from "./assert-event-type";
-import { MapStyle, MapStyleId } from "./constants";
-import { createLayerMachine, LayerEvent } from "./layer-state-machine";
-import mapbox from "./map-wrapper";
-import { addMapLayer, DataLayer } from "./mapbox-helpers";
+import { assertEventType } from "lib/assert-event-type";
+import { MapStyle, MapStyleId, TileJSON } from "lib/constants";
+import mapbox from "lib/map-wrapper";
+import { addMapLayer, DataLayer } from "lib/mapbox-helpers";
+import { createLayerMachine, LayerEvent } from "./layer";
 
 export type LayerRef = ActorRef<LayerEvent>;
 
@@ -37,7 +37,7 @@ export type MapEvent =
   | { type: MapEventType.SET_CENTER; center: [string, string] }
   | { type: MapEventType.SET_ZOOM; zoom: string }
   | { type: MapEventType.CHANGE_STYLE; style: MapStyle }
-  | { type: MapEventType.ADD_LAYER; layer: DataLayer }
+  | { type: MapEventType.ADD_LAYER; layer: DataLayer; tilejson?: TileJSON }
   | { type: MapEventType.DELETE_LAYER; id: string }
   | { type: MapEventType.MOVE_TO_TOP_LAYER; id: string }
   | { type: MapEventType.DUPLICATE_LAYER; id: string };
@@ -79,7 +79,10 @@ const changeStyle = assign<MapContext, MapEvent>((_ctx, event) => {
   assertEventType(event, MapEventType.CHANGE_STYLE);
 
   mapbox.map.once("styledata", () => {
-    _ctx.layers.forEach((layer) => addMapLayer(mapbox.map, layer));
+    _ctx.layers.reduceRight((layers, layer) => {
+      addMapLayer(mapbox.map, layer);
+      return layers;
+    }, []);
   });
   mapbox.map.setStyle(event.style.url);
 
@@ -118,7 +121,7 @@ const addLayer = assign<MapContext, MapEvent>({
     };
 
     return [
-      { ...newLayer, ref: spawn(createLayerMachine(newLayer)) },
+      { ...newLayer, ref: spawn(createLayerMachine(newLayer, event.tilejson)) },
       ..._ctx.layers,
     ];
   },

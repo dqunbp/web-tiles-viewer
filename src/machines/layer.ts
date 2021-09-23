@@ -1,22 +1,10 @@
-import { createMachine, assign, sendParent, DoneInvokeEvent } from "xstate";
-import { addMapLayer, DataLayer, removeMapLayer } from "./mapbox-helpers";
-import mapbox from "./map-wrapper";
-import { MapEventType } from "./map-state-machine";
-import { randomID } from "./get-random-id";
-import { mapUtils } from "./mapbox-api-utils";
-
-type TileJSON = {
-  tilejson?: string;
-  name?: string;
-  description?: string;
-  version?: string;
-  attribution?: string;
-  scheme: "xyz" | "tms";
-  tiles: string[];
-  minzoom: number;
-  maxzoom: number;
-  bounds: [number, number, number, number];
-};
+import { createMachine, assign, sendParent } from "xstate";
+import { addMapLayer, DataLayer, removeMapLayer } from "../lib/mapbox-helpers";
+import mapbox from "../lib/map-wrapper";
+import { MapEventType } from "./mapbox-map";
+import { randomID } from "../lib/get-random-id";
+import { mapUtils } from "../lib/mapbox-api-utils";
+import { TileJSON } from "../lib/constants";
 
 export type LayerContext = {
   data: DataLayer;
@@ -27,7 +15,6 @@ export type LayerContext = {
 
 type LayerState =
   | { value: "created"; context: LayerContext }
-  | { value: "loading"; context: LayerContext }
   | { value: "idle"; context: LayerContext }
   | { value: "deleted"; context: LayerContext };
 
@@ -46,7 +33,7 @@ export type LayerEvent =
   | { type: LayerEventType.TOGGLE_VISIBILITY }
   | { type: LayerEventType.CHANGE_OPACITY; value: number };
 
-export const createLayerMachine = (layer: DataLayer) =>
+export const createLayerMachine = (layer: DataLayer, tilejson?: TileJSON) =>
   createMachine<LayerContext, LayerEvent, LayerState>(
     {
       id: "layer",
@@ -55,12 +42,14 @@ export const createLayerMachine = (layer: DataLayer) =>
         data: layer,
         opacity: 1,
         visible: true,
+        tilejson,
       },
       on: {
         DELETE: "deleted",
         DUPLICATE: {
           actions: sendParent((_ctx) => ({
             type: MapEventType.ADD_LAYER,
+            tilejson: _ctx.tilejson,
             layer: {
               ..._ctx.data,
               id: randomID(),
@@ -81,33 +70,17 @@ export const createLayerMachine = (layer: DataLayer) =>
       states: {
         created: {
           entry: (_ctx) => {
-            console.log("entry");
-
-            mapbox.map.once("error", (...args) =>
-              console.log("error adding layer", args)
-            );
             addMapLayer(mapbox.map, _ctx.data);
           },
           always: [
-            { target: "loading", cond: "isTilejsonUrl" },
+            { target: "fitting", cond: "isTilejsonUrl" },
             { target: "idle" },
           ],
         },
-        loading: {
-          invoke: {
-            id: "fetchTilejson",
-            src: (_ctx) => fetchTilejson(_ctx.data.url),
-            onDone: {
-              target: "idle",
-              actions: [
-                assign({
-                  tilejson: (_ctx, event: DoneInvokeEvent<TileJSON>) => {
-                    fitBounds(event.data);
-                    return event.data;
-                  },
-                }),
-              ],
-            },
+        fitting: {
+          always: {
+            target: "idle",
+            actions: (_ctx) => fitBounds(_ctx.tilejson!),
           },
         },
         idle: {
@@ -145,18 +118,15 @@ export const createLayerMachine = (layer: DataLayer) =>
       },
     },
     {
-      guards: { isTilejsonUrl },
+      guards: {
+        isTilejsonUrl: (_ctx: LayerContext) => _ctx.data.urlType === "tilejson",
+      },
     }
   );
 
-async function fetchTilejson(url: string): Promise<TileJSON> {
-  const response = await fetch(url);
-  return await response.json();
-}
-
-const isTilejsonUrl = (_ctx: LayerContext) => _ctx.data.urlType === "tilejson";
-
 const fitBounds = (tilejson: TileJSON): void => {
+  console.log({ tilejson });
+
   const bounds = tilejson?.bounds;
 
   if (!bounds) {
