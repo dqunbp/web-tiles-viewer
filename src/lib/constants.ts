@@ -81,3 +81,23 @@ export const styles: StyleObject[] = [
     url: "mapbox://styles/mapbox/outdoors-v11",
   },
 ];
+
+export type VectorLayerItem = {
+  id: string;
+  description: string;
+  minzoom: number;
+  maxzoom: number;
+};
+export type TileJSON = {
+  tilejson?: string;
+  name?: string;
+  description?: string;
+  version?: string;
+  attribution?: string;
+  scheme: "xyz" | "tms";
+  tiles: string[];
+  minzoom: number;
+  maxzoom: number;
+  bounds: [number, number, number, number];
+  vector_layers: VectorLayerItem[];
+};

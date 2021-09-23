@@ -9,7 +9,11 @@ import {
   Menu,
   MenuItem,
   Intent,
+  Callout,
+  Collapse,
+  TextArea,
 } from "@blueprintjs/core";
+import { ItemPredicate, ItemRenderer, Select } from "@blueprintjs/select";
 import { Popover2 } from "@blueprintjs/popover2";
 import { IconNames } from "@blueprintjs/icons";
 import {
@@ -17,20 +21,27 @@ import {
   LayerType,
   Placeholders,
   UrlType,
-  UrlTypeMenuItem,
+  VectorLayerItem,
 } from "lib/constants";
 import { randomID } from "lib/get-random-id";
 import { DataLayer } from "lib/mapbox-helpers";
+import { TileJSON } from "lib/constants";
+import { useMachine } from "@xstate/react";
+import { fetchTilejsonMachine } from "machines/fetch-tilejson";
+import { useDisclosure } from "hooks/use-disclosure";
 
 function UrlTypeMenu({
   type,
   onChange,
+  disabled = false,
 }: {
   type: UrlType;
   onChange(nextType: UrlType): void;
+  disabled: boolean;
 }) {
   return (
     <Popover2
+      disabled={disabled}
       content={
         <Menu>
           {layerMenuItems.map(({ value, label }) => (
@@ -52,8 +63,34 @@ function UrlTypeMenu({
   );
 }
 
+const TileJsonPreview: React.FC<{ tilejson: TileJSON }> = ({ tilejson }) => {
+  const { isOpen, onToggle } = useDisclosure();
+
+  return (
+    <Callout intent={Intent.SUCCESS}>
+      <div className="flex items-center flex-nowrap justify-between">
+        <div>TileJSON is valid</div>
+        <Button
+          minimal
+          text="View"
+          icon={!isOpen ? IconNames.CHEVRON_DOWN : IconNames.CHEVRON_UP}
+          onClick={onToggle}
+        />
+      </div>
+      <Collapse className={isOpen ? "mt-2" : ""} isOpen={isOpen}>
+        <TextArea
+          fill
+          // growVertically
+          rows={10}
+          value={JSON.stringify(tilejson, null, 2)}
+        />
+      </Collapse>
+    </Callout>
+  );
+};
+
 const AddLayerForm: React.FC<{
-  onSubmit(payload: DataLayer): void;
+  onSubmit(payload: DataLayer, tilejson?: TileJSON | null): void;
   onClose(): void;
 }> = ({ onSubmit, onClose }) => {
   const [layerType, setLayerType] = React.useState<LayerType>("raster");
@@ -62,27 +99,44 @@ const AddLayerForm: React.FC<{
 
   const [urlType, setUrlType] = React.useState<UrlType>("xyz");
   const [url, setUrl] = React.useState<string>("");
-  const handleChangeUrl = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    if (url.includes(".json?") || url.endsWith(".json")) setUrlType("tilejson");
-    setUrl(e.target.value);
-  };
 
   const [name, setName] = React.useState<string>("");
   const [sourceLayer, setSourceLayer] = React.useState<string>("");
 
+  const [state, send] = useMachine(fetchTilejsonMachine, {
+    devTools: true,
+  });
+
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const typeValue =
+      value.includes(".json?") || value.endsWith(".json")
+        ? "tilejson"
+        : urlType;
+
+    setUrl(value);
+    setUrlType(typeValue);
+
+    if (typeValue === "tilejson") send({ type: "URL_CHANGE", value });
+  };
+
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    onSubmit({
-      id: randomID(),
-      name,
-      type: layerType,
-      urlType,
-      url,
-      sourceLayer,
-    });
+    onSubmit(
+      {
+        id: randomID(),
+        name,
+        type: layerType,
+        urlType,
+        url,
+        sourceLayer,
+      },
+      state.matches("valid") ? state.context.tilejson : null
+    );
   };
+
+  const isFetching = state.matches("fetching");
 
   return (
     <div>
@@ -92,7 +146,7 @@ const AddLayerForm: React.FC<{
       </div>
       <form onSubmit={handleFormSubmit}>
         <FormGroup
-          className="mb-6"
+          className="mb-5"
           label={<div className="font-bold">Name</div>}
           labelFor="name"
           // helperText="Layer display name"
@@ -110,7 +164,7 @@ const AddLayerForm: React.FC<{
 
         <RadioGroup
           inline
-          className="mb-6"
+          className="mb-5"
           name="layer-type"
           label={<div className="font-bold">Layer type</div>}
           onChange={handleLayerTypeChange}
@@ -121,7 +175,7 @@ const AddLayerForm: React.FC<{
         </RadioGroup>
 
         <FormGroup
-          className="mb-6"
+          className="mb-3"
           label={<div className="font-bold">URL</div>}
           labelFor="url"
         >
@@ -130,16 +184,40 @@ const AddLayerForm: React.FC<{
             id="url"
             name="url"
             required
+            disabled={isFetching}
             placeholder={Placeholders[urlType][layerType]}
-            rightElement={<UrlTypeMenu type={urlType} onChange={setUrlType} />}
+            rightElement={
+              <UrlTypeMenu
+                type={urlType}
+                onChange={setUrlType}
+                disabled={isFetching}
+              />
+            }
             value={url}
-            onChange={handleChangeUrl}
+            onChange={handleUrlChange}
           />
         </FormGroup>
 
+        <div className="mb-5">
+          {state.matches("invalid.tilejson") && (
+            <Callout intent={Intent.DANGER}>Invalid TileJSON</Callout>
+          )}
+          {state.matches("invalid.url") && (
+            <Callout intent={Intent.DANGER}>Invalid URL</Callout>
+          )}
+          {state.matches("invalid.network") && (
+            <Callout intent={Intent.DANGER}>
+              Network error. Unable to fetch TileJSON
+            </Callout>
+          )}
+          {state.matches("valid") && (
+            <TileJsonPreview tilejson={state.context.tilejson!} />
+          )}
+        </div>
+
         {layerType === "vector" && (
           <FormGroup
-            className="mb-6"
+            className="mb-5"
             label={<div className="font-bold">Source layer</div>}
             labelFor="source-layer"
           >
@@ -154,7 +232,15 @@ const AddLayerForm: React.FC<{
             />
           </FormGroup>
         )}
-        <Button fill large type="submit" intent={Intent.SUCCESS} text="Save" />
+
+        <Button
+          loading={isFetching}
+          fill
+          large
+          type="submit"
+          intent={Intent.SUCCESS}
+          text="Save"
+        />
       </form>
     </div>
   );

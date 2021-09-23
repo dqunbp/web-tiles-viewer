@@ -85,7 +85,7 @@ function createLayer(id: string, sourceId: string, layer: DataLayer): Layer {
 }
 
 export function addMapLayer(mapAPI: mapboxgl.Map, layer: DataLayer) {
-  const sourceId = `${layer.id}`;
+  const sourceId = `${layer.id}-source`;
 
   const addSourcePayload = createSource(layer);
   const addLayerPayload = createLayer(`${layer.id}`, sourceId, layer);

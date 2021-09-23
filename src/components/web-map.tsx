@@ -1,7 +1,7 @@
 import * as React from "react";
 import mapbox from "lib/map-wrapper";
-import { mapService } from "lib/map-state-machine";
-import { MapEventType } from "lib/map-state-machine";
+import { mapService } from "machines/mapbox-map";
+import { MapEventType } from "machines/mapbox-map";
 
 const onLoad = () => {
   mapService.send({ type: MapEventType.LOAD });

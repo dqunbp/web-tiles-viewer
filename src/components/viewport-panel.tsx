@@ -2,7 +2,7 @@ import * as React from "react";
 import { Button, EditableText, Intent } from "@blueprintjs/core";
 import { IconNames } from "@blueprintjs/icons";
 import { useActor } from "@xstate/react";
-import { MapEventType, mapService } from "lib/map-state-machine";
+import { MapEventType, mapService } from "machines/mapbox-map";
 import { useCopyToClipboard } from "hooks/use-copy-to-clipboard";
 import { useEditableField } from "hooks/use-editable-field";
 

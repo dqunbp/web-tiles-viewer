@@ -19,8 +19,9 @@ import LayersList from "./layer-list";
 import { IconNames } from "@blueprintjs/icons";
 import { useMedia } from "hooks/use-media";
 import { useActor } from "@xstate/react";
-import { MapEventType, mapService } from "lib/map-state-machine";
+import { MapEventType, mapService } from "machines/mapbox-map";
 import { DataLayer } from "lib/mapbox-helpers";
+import { TileJSON } from "lib/constants";
 
 const LayersTab: React.FC = () => {
   const [state, send] = useActor(mapService);
@@ -33,10 +34,11 @@ const LayersTab: React.FC = () => {
     `450px`
   );
 
-  const handleAddNewLayer = (layer: DataLayer) => {
+  const handleAddNewLayer = (layer: DataLayer, tilejson: TileJSON) => {
     send({
       type: MapEventType.ADD_LAYER,
       layer,
+      tilejson,
     });
     onClose();
   };

@@ -2,7 +2,7 @@ import * as React from "react";
 import { Card } from "@blueprintjs/core";
 import { MapStyle, styles } from "lib/constants";
 import { useActor } from "@xstate/react";
-import { MapEventType, mapService } from "lib/map-state-machine";
+import { MapEventType, mapService } from "machines/mapbox-map";
 import type { StyleObject } from "lib/constants";
 
 const Style: React.FC<StyleObject> = (style) => {
