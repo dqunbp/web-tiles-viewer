@@ -14,7 +14,7 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="absolute z-20 sm:m-8 left-0 sm:top-0 top-14 bottom-0  bg-LIGHT_GRAY5 shadow-md sm:rounded  min-w-full sm:min-w-[300px]">
+    <div className="absolute z-20 md:m-8 left-0 md:top-0 top-14 bottom-0  bg-LIGHT_GRAY5 shadow-md md:rounded  min-w-full md:min-w-[300px]">
       <Tabs
         large
         renderActiveTabPanelOnly

@@ -11,7 +11,7 @@ import { State } from "xstate";
 if (typeof window !== "undefined") {
   if (process.env.NODE_ENV !== "production") inspect({ iframe: false });
 
-  const ctx = localStorage.getItem("state");
+  const ctx = localStorage.getItem("web-tiles-viewer-state");
 
   const nextContext = ctx
     ? (JSON.parse(ctx) as MapContext)

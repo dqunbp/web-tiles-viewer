@@ -25,7 +25,7 @@ export const useCopyToClipboard = (
     );
 
     return () => clearTimeout(timeoutId);
-  }, [copyStatus]);
+  }, [copyStatus, notifyTimeout]);
 
   return [copyStatus, copy];
 };

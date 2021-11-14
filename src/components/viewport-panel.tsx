@@ -49,8 +49,8 @@ const ViewportPanel: React.FC = () => {
   );
 
   return (
-    <div className="z-10 absolute right-0 top-0 sm:right-8 w-full sm:w-auto sm:top-8 p-3 sm:px-5 sm:pb-2 bg-LIGHT_GRAY5 sm:rounded border-b-4 border-LIGHT_GRAY1">
-      <div className="flex items-center justify-center text-xs sm:text-sm">
+    <div className="z-10 absolute right-0 top-0 md:right-8 w-full md:w-auto md:top-8 p-3 md:px-5 md:pb-2 bg-LIGHT_GRAY5 md:rounded border-b-4 border-LIGHT_GRAY1">
+      <div className="flex items-center justify-center text-xs md:text-sm">
         <strong className="mr-3">Zoom</strong>
         <div className="mr-3">
           <EditableText

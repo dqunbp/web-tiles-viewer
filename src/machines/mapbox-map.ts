@@ -128,7 +128,10 @@ const addLayer = assign<MapContext, MapEvent>({
 });
 
 const persist = () => {
-  localStorage.setItem("state", JSON.stringify(mapService.state.context));
+  localStorage.setItem(
+    "web-tiles-viewer-state",
+    JSON.stringify(mapService.state.context)
+  );
 };
 
 const reduceLayers = (acc: HydratedLayer[], layer: DataLayer) => [
